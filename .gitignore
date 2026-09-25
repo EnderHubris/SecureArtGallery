@@ -1,5 +1,17 @@
+# various
 .vscode/
+.DS_Store
 node_modules/
 build/
 
+# production folders
+src/
+database/
+bun.*
+package.*
+docker*
+Dockerfile
+
+# secrets
 .env
+.env*
