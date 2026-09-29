@@ -1,0 +1,219 @@
+import { db } from "./db";
+import {
+    eq, or
+} from "drizzle-orm";
+import * as schema from "../../database/schema";
+
+import jwt from 'jsonwebtoken';
+import { UploadImage } from "./utilities";
+
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!")
+
+function GenerateJWT(username: string, email: string, role: string): string {
+    if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!");
+    return jwt.sign(
+        {
+            username: username,
+            email: email,
+            role: role
+        },
+        JWT_SECRET,
+        {
+            expiresIn: "7d",
+        }
+    );
+}
+
+export async function FindUserBySession(jwt: string|undefined|null):
+Promise<
+    {
+        id: string;
+        username: string;
+        email: string;
+        role: string;
+        image: string;
+    } | null | undefined
+> {
+    try {
+        if (!jwt) return null;
+
+        const [sess] = await db.select({
+            uid: schema.sessions.uid
+        }).from(schema.sessions)
+        .where(eq(schema.sessions.token, jwt))
+        .limit(1);
+        if (!sess) return null;
+
+        const [user] = await db.select({
+            id: schema.users.id,
+            username: schema.users.username,
+            email: schema.users.email,
+            role: schema.users.role,
+            image: schema.users.image,
+        }).from(schema.users)
+        .where(eq(schema.users.id, sess.uid)).limit(1);
+
+        return user;
+    } catch {
+        return null;
+    }
+}
+
+async function FindUser(username: string, email: string = ""):
+Promise<
+    {
+        id: string;
+        username: string;
+        password_hash: string;
+        email: string;
+        role: string;
+        image: string;
+    } | null | undefined
+> {
+    try {
+        const [user] = await db.select({
+            id: schema.users.id,
+            username: schema.users.username,
+            password_hash: schema.users.password_hash,
+            email: schema.users.email,
+            role: schema.users.role,
+            image: schema.users.image,
+        }).from(schema.users)
+        .where(or(
+            eq(schema.users.username, username),
+            eq(schema.users.email, email)
+        )).limit(1);
+        return user;
+    } catch {
+        return null;
+    }
+}
+
+export async function DeleteSession(jwt: string|undefined|null) {
+    try {
+        if (!jwt) return false;
+        console.log("[*] Attempting to delete session:", jwt);
+
+        const result = await db.delete(schema.sessions)
+                        .where(eq(schema.sessions.token, jwt));
+
+        const removed = (result.rowCount ?? 0) > 0;
+        console.log("[*] Session Deletion:", result ? "successful" : "failed");
+
+        return removed;
+    } catch (e) {
+        console.error(`[DELETE-SESSION ${new Date().toDateString()}]`, e);
+        return false;
+    }
+}
+
+async function CreateSession(jwt: string, uid: string) {
+    try {
+        await db.insert(schema.sessions).values({
+            uid: uid,
+            token: jwt
+        });
+        return true;
+    } catch (e) {
+        console.error(`[CREAT-SESS ${new Date().toDateString()}]`, e);
+        return false;
+    }
+}
+
+/**
+ * return JWT token returned as a cookie
+ * 
+ * @param username or email
+ * @param password_hash 
+ */
+export async function Login(username: string, password_hash: string) {
+    try {
+        const user = await FindUser(username, username); // username value can also be an email
+        if (!user) {
+            return {
+                "success": false,
+                "message":"Incorrect Username or Password",
+                "jwt": ""
+            }
+        }
+
+        if (user.password_hash !== password_hash) {
+            return {
+                "success": false,
+                "message":"Incorrect Username or Password",
+                "jwt": ""
+            }
+        }
+
+        console.log(`[DB-LOGIN ${new Date().toDateString()}] login successful as ${username}`);
+
+        const token = GenerateJWT(user.username, user.email, user.role);
+        const sess = await CreateSession(token, user.id);
+        if (!sess){
+            return {
+                "success": false,
+                "message":"Failed to Create Session!",
+                "jwt": ""
+            }
+        }
+        
+        return {
+            "success": true,
+            "message":"Login Successful!",
+            "jwt": token,
+            "maxAge": 7 * 24 * 60 * 60 * 1000 // 7d in milliseconds
+        }
+    } catch (e: any) {
+        console.error(`[DB-LOGIN ${new Date().toDateString()}]`, e);
+        return {
+            "success": false,
+            "message":"Login Failed!",
+            "jwt": ""
+        }
+    }
+}
+
+export async function Register(
+    username: string,
+    email: string,
+    password_hash: string,
+    image: Express.Multer.File|null|undefined
+) {
+    try {
+        // check if user already exists
+        const user = await FindUser(username, email);
+        if (user) {
+            return {
+                "success": false,
+                "message":"User Already Exists!"
+            }
+        }
+
+        // check for malformed password_hash
+        const valid_hash = /^[a-fA-F0-9]{64}$/.test(password_hash);
+        if (!valid_hash) {
+            console.warn(`[!] Invalid hash was sent to server (${new Date().toDateString()})`)
+            return {
+                "success": false,
+                "message":"User Already Exists!"
+            }
+        }
+
+        // if an image was provided upload and handle it
+        const img_str = await UploadImage(image);
+
+        // create a new user entry
+        await db.insert(schema.users).values({
+            username: username,
+            email: email,
+            password_hash: password_hash,
+            image: img_str
+        })
+
+        return { "success": true, "message": "Registered Successfully!" }
+    } catch (e: any) {
+        console.error(`[DB-LOGIN ${new Date().toDateString()}]`, e);
+        return { "success": false, "message": "Registered Failed!" }
+    }
+}

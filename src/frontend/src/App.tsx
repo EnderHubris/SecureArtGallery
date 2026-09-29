@@ -12,19 +12,49 @@ import Register from './pages/register.tsx'
 // import styling
 import "bootstrap/dist/css/bootstrap.min.css";
 import './App.css'
+import { useEffect, useState } from 'react';
+import { GetBackendStr } from './utilities/utiliies.ts';
+
+const defaultUser = {
+    id: "0",
+    username: "guest",
+    email: "",
+    role: "guest",
+    image: "guest.png"
+}
 
 function App() {
+    const [loggedIn, setLoggedIn] = useState(false);
+    const [user, setUser] = useState(defaultUser);
+
+    const getUserInfo = async () => {
+        const endpoint = GetBackendStr("/info");
+        const response = await fetch(endpoint, {
+            method: "POST",
+            credentials: "include",
+        });
+
+        const result = await response.json();
+        console.log(result);
+        setLoggedIn(result.success);
+        setUser(result.user);
+    };
+
+    useEffect(() => {
+        getUserInfo();
+    }, []);
+    
     return (
     <>
         <div className="d-flex vh-100 overflow-hidden">
             {/* Navbar */}
-            <Navbar />
+            <Navbar loggedIn={loggedIn} user={user} />
 
             <main className="flex-grow-1 overflow-auto p-4">
                 <Router>
                     <Routes>
                         <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<Login />} />
+                        <Route path="/login" element={<Login afterLogin={getUserInfo} />} />
                         <Route path="/register" element={<Register />} />
                     </Routes>
                 </Router>

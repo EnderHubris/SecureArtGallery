@@ -1,4 +1,38 @@
+import { useState } from "react";
+import { GetBackendStr, str2sha256 } from "../utilities/utiliies";
+
 export default function Register() {
+    const [username, SetUsername] = useState("");
+    const [email, SetEmail] = useState("");
+    const [password, SetPassword] = useState("");
+    const [image, SetImage] = useState<File|null|undefined>(null);
+
+    function updateImageFile(e) {
+        const file = e.target.files?.[0] ?? null;
+        SetImage(file);
+    }
+    
+    async function sendRegister(e) {
+        e.preventDefault();
+
+        // needed because image cannot be pushed in a JSON object
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("email", email);
+        formData.append("password_hash", await str2sha256(password));
+        if (image) {
+            formData.append("pfp", image);
+        }
+
+        const endpoint = GetBackendStr("/register");
+        const response = await fetch(endpoint, {
+            method: "POST",
+            body: formData,
+        });
+
+        const result = await response.json();
+    }
+
     return (
     <>
         <section className="vh-100">
@@ -7,7 +41,7 @@ export default function Register() {
                     <div className="col-12 col-md-8 col-lg-6 col-xl-5">
                         <div className="card">
                             <div className="card-body p-5 text-center">
-                                <div className="pb-4">
+                                <form className="pb-4" onSubmit={sendRegister}>
                                     <h2 className="fw-bold mb-4 text-uppercase">
                                         Register
                                     </h2>
@@ -18,6 +52,8 @@ export default function Register() {
                                             type="text"
                                             placeholder="Username"
                                             className="form-control form-control-lg mb-3"
+                                            value={username}
+                                            onChange={(e) => SetUsername(e.target.value)}
                                             required
                                         />
 
@@ -26,6 +62,8 @@ export default function Register() {
                                             type="email"
                                             placeholder="Email"
                                             className="form-control form-control-lg"
+                                            value={email}
+                                            onChange={(e) => SetEmail(e.target.value)}
                                             required
                                         />
                                     </div>
@@ -45,12 +83,21 @@ export default function Register() {
                                             id="pfp"
                                             type="file"
                                             className="form-control"
-                                            accept="image/*"
+                                            accept="image/png,image/jpeg"
+                                            onChange={updateImageFile}
                                         />
 
                                         <div className="form-text">
-                                            You can add a profile picture now or choose
-                                            one later.
+                                            {image ? (
+                                                <p>
+                                                    Selected: {image.name}
+                                                </p>
+                                            ) : (
+                                                <p>
+                                                    You can add a profile picture now or choose
+                                                    one later.
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -60,6 +107,8 @@ export default function Register() {
                                             type="password"
                                             placeholder="Password"
                                             className="form-control form-control-lg"
+                                            value={password}
+                                            onChange={(e) => SetPassword(e.target.value)}
                                             required
                                         />
                                     </div>
@@ -70,7 +119,7 @@ export default function Register() {
                                     >
                                         Register
                                     </button>
-                                </div>
+                                </form>
 
                                 <div>
                                     <p>
