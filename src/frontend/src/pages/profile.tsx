@@ -3,13 +3,24 @@ import { GetBackendStr, str2sha256 } from "../utilities/utiliies";
 
 import Feedback from '../components/feedback';
 
-export default function Register() {
+type UserData = {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    image: string;
+}
+
+export default function Profile({ user } : { user: UserData }) {
+
     const pfpRef = useRef<HTMLInputElement>(null);
     
-    const [username, SetUsername] = useState("");
-    const [email, SetEmail] = useState("");
+    const [n_username, SetUsername] = useState("");
+    const [n_email, SetEmail] = useState("");
+    const [n_image, SetImage] = useState<File|null|undefined>(null);
+
+    const [n_password, SetNewPassword] = useState("");
     const [password, SetPassword] = useState("");
-    const [image, SetImage] = useState<File|null|undefined>(null);
 
     const [success, SetSuccess] = useState(false);
     const [msg, SetMsg] = useState<string|undefined|null>("");
@@ -19,21 +30,23 @@ export default function Register() {
         SetImage(file);
     }
     
-    async function sendRegister(e) {
+    async function updateProfile(e) {
         e.preventDefault();
 
         // needed because image cannot be pushed in a JSON object
         const formData = new FormData();
-        formData.append("username", username);
-        formData.append("email", email);
+        formData.append("username", n_username);
+        formData.append("email", n_email);
+        formData.append("n_password_hash", await str2sha256(n_password));
         formData.append("password_hash", await str2sha256(password));
-        if (image) {
-            formData.append("pfp", image);
+        if (n_image) {
+            formData.append("pfp", n_image);
         }
 
-        const endpoint = GetBackendStr("/register");
+        const endpoint = GetBackendStr("/user/update");
         const response = await fetch(endpoint, {
             method: "POST",
+            credentials: "include",
             body: formData,
         });
 
@@ -44,11 +57,16 @@ export default function Register() {
             SetUsername("");
             SetEmail("");
             SetPassword("");
+            SetNewPassword("");
             SetImage(null);
 
             // clear file input element value
             if (pfpRef.current)
                 pfpRef.current.value = "";
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 3100);
         }
 
         SetSuccess(result.success);
@@ -63,36 +81,65 @@ export default function Register() {
     return (
     <>
         <div className="container">
-            <div className="row d-flex justify-content-center align-items-center h-100">
-                <Feedback success={success} message={msg} />
-                            
-                <div className="col-12 col-md-8 col-lg-6 col-xl-5">
+            <Feedback success={success} message={msg} />
+            <div className="row justify-content-center align-items-start">
+
+                {/* Profile Preview */}
+                <div className="col-12 col-md-8 col-lg-3 mb-4 mb-lg-0 order-first order-lg-last">
+                    <div className="card">
+                        <div className="card-body p-4 text-center">
+                            <h6 className="text-uppercase text-body-secondary mb-3">
+                                Current Profile
+                            </h6>
+
+                            <img
+                                src={GetBackendStr(`/image/${user.image}`)}
+                                className="rounded-circle border mb-3"
+                                style={{ width: 96, height: 96, objectFit: "cover", borderRadius: '50%' }}
+                            />
+
+                            <h5 className="fw-bold mb-1 text-break">{user.username}</h5>
+                            <p className="text-body-secondary small mb-2 text-break">{user.email}</p>
+                            <span className="badge text-bg-secondary text-uppercase">{user.role}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Profile Update Form */}
+                <div className="col-12 col-md-8 col-lg-6 offset-lg-3">
                     <div className="card">
                         <div className="card-body p-5 text-center">
-                            <form className="pb-4" onSubmit={sendRegister}>
+                            <form className="pb-4" onSubmit={updateProfile}>
                                 <h2 className="fw-bold mb-4 text-uppercase">
-                                    Register
+                                    Edit Profile
                                 </h2>
 
                                 <div className="mb-4">
                                     <input
                                         id="username"
                                         type="text"
-                                        placeholder="Username"
+                                        placeholder="New Username"
                                         className="form-control form-control-lg mb-3"
-                                        value={username}
+                                        value={n_username}
                                         onChange={(e) => SetUsername(e.target.value)}
-                                        required
                                     />
 
                                     <input
                                         id="email"
                                         type="email"
-                                        placeholder="Email"
-                                        className="form-control form-control-lg"
-                                        value={email}
+                                        placeholder="New Email"
+                                        className="form-control form-control-lg mb-3"
+                                        value={n_email}
                                         onChange={(e) => SetEmail(e.target.value)}
-                                        required
+                                    />
+
+                                    <input
+                                        id="n_passwd"
+                                        type="password"
+                                        placeholder="New Password"
+                                        className="form-control form-control-lg"
+                                        value={n_password}
+                                        onChange={(e) => SetNewPassword(e.target.value)}
                                     />
                                 </div>
 
@@ -102,9 +149,6 @@ export default function Register() {
                                         className="form-label fw-semibold mb-1"
                                     >
                                         Profile Image
-                                        <span className="text-muted fw-normal ms-2">
-                                            (Optional)
-                                        </span>
                                     </label>
 
                                     <input
@@ -117,14 +161,9 @@ export default function Register() {
                                     />
 
                                     <div className="form-text">
-                                        {image ? (
+                                        {n_image && (
                                             <p>
-                                                Selected: {image.name}
-                                            </p>
-                                        ) : (
-                                            <p>
-                                                You can add a profile picture now or choose
-                                                one later.
+                                                Selected: {n_image.name}
                                             </p>
                                         )}
                                     </div>
@@ -134,7 +173,7 @@ export default function Register() {
                                     <input
                                         id="passwd"
                                         type="password"
-                                        placeholder="Password"
+                                        placeholder="Current Password"
                                         className="form-control form-control-lg"
                                         value={password}
                                         onChange={(e) => SetPassword(e.target.value)}
@@ -146,19 +185,9 @@ export default function Register() {
                                     className="btn btn-outline-primary btn-lg px-5"
                                     type="submit"
                                 >
-                                    Register
+                                    Update Profile
                                 </button>
                             </form>
-
-                            <div>
-                                <p>
-                                    Have an account?
-                                    <br />
-                                    <a href="/login" className="fw-bold">
-                                        Log in
-                                    </a>
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>

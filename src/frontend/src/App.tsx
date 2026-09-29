@@ -8,6 +8,7 @@ import Navbar from "./components/navbar.tsx";
 import Home from './pages/home.tsx'
 import Login from './pages/login.tsx'
 import Register from './pages/register.tsx'
+import Profile from './pages/profile.tsx'
 
 // import styling
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -55,6 +56,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login afterLogin={getUserInfo} />} />
+                        <Route path="/profile" element={<Profile user={user} />} />
                         <Route path="/register" element={<Register />} />
                     </Routes>
                 </Router>

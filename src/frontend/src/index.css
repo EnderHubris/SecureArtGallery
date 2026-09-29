@@ -1,6 +1,13 @@
 .pfp {
     width: 40px;
-    border-radius: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: box-shadow 0.2s ease;
+}
+
+.pfp:hover {
+    cursor: pointer;
+    box-shadow: 0 0 0 3px rgb(168, 166, 171);
 }
 
 .vert-nav {

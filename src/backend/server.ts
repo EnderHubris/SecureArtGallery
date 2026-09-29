@@ -1,11 +1,10 @@
 import cookieParser from "cookie-parser"
 import express from "express";
-import multer from "multer";
 import cors from 'cors';
 import path from "node:path";
 
 import { DeleteSession, FindUserBySession, Login, Register } from "./user_rules";
-import { UPLOAD_DIR } from "./utilities";
+import { UPLOAD_DIR, uploadMulter } from "./utilities";
 
 const app = express();
 const port = 8888;
@@ -37,12 +36,11 @@ app.use(cors({
 }));
 app.disable('x-powered-by');
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 10 * 1024 * 1024, // 10 MB
-    },
-});
+// routes are used to divide backend routing logic into
+// separate files to reduce clustering multiple
+// endpoints into a single file
+import userRoutes from "./routers/user_router";
+app.use("/user", userRoutes);
 
 app.get("/", async (req, res) => {
     res.send("Hello World!");
@@ -69,11 +67,10 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.post("/register", upload.single("pfp"), async (req, res) => {
+app.post("/register", uploadMulter.single("pfp"), async (req, res) => {
     try {
         const { username, email, password_hash } = req.body;
         const image = req.file;
-        console.log(image);
         
         console.log(`[REGISTER ${new Date().toDateString()}] Trying to register user: ${username}`);
         

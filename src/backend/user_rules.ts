@@ -5,7 +5,7 @@ import {
 import * as schema from "../../database/schema";
 
 import jwt from 'jsonwebtoken';
-import { UploadImage } from "./utilities";
+import { CheckPassword, UploadImage } from "./utilities";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!")
@@ -215,5 +215,85 @@ export async function Register(
     } catch (e: any) {
         console.error(`[DB-LOGIN ${new Date().toDateString()}]`, e);
         return { "success": false, "message": "Registered Failed!" }
+    }
+}
+
+export async function UpdateProfile(
+    username: string,
+    email: string,
+    n_password_hash: string,
+    password_hash: string,
+    image: Express.Multer.File|null|undefined,
+    jwt: string|null|undefined
+) {
+    try {
+        const user = await FindUserBySession(jwt);
+        if (!user) {
+            return {
+                "success": false,
+                "message":"Invalid Session!"
+            }
+        }
+
+        // check if the provided hash matches the current user's
+        if (!await CheckPassword(user.id, password_hash)) {
+            return { "success": false, "message": "Update Failed!" }
+        }
+
+        // check if new username or new email is taken
+        if (username.length > 0 || email.length > 0) {
+            const existingUser = await FindUser(username, email);
+            if (existingUser) {
+                return {
+                    "success": false,
+                    "message":"Username or Email is taken!"
+                }
+            }
+        }
+
+        // check for malformed password_hash
+        if (n_password_hash.length > 0 && password_hash.length > 0) {
+            const valid_hash = /^[a-fA-F0-9]{64}$/.test(password_hash);
+            const valid_hash2 = /^[a-fA-F0-9]{64}$/.test(n_password_hash);
+            if (!valid_hash || !valid_hash2) {
+                console.warn(`[!] Invalid hash was sent to server (${new Date().toDateString()}) <-- UPDATE-PROFILE`)
+                return {
+                    "success": false,
+                    "message":"Username or Email is taken!"
+                }
+            }
+        }
+
+        // finalize update value sets
+        let n_values: Record<string, unknown> = {};
+
+        if (username && username.length > 0)
+            n_values.username = username;
+
+        if (email && email.length > 0)
+            n_values.email = email;
+
+        if (n_password_hash && n_password_hash.length > 0)
+            n_values.password_hash = n_password_hash;
+
+        if (image) {
+            const img_str = await UploadImage(image);
+            n_values.image = img_str;
+        }
+
+        console.warn("[!] Applying Updated Profile Data...")
+        console.warn(n_values);
+
+        // update entry values based on uid linked to session (JWT)
+        const profileRes = await db.update(schema.users)
+            .set(n_values)
+            .where(eq(schema.users.id, user.id));
+
+        // clear old session(s) and generate a new one
+
+        return { "success": true, "message": "Updated Successfully!" }
+    } catch (e: any) {
+        console.error(`[UPDATE-PROFILE ${new Date().toDateString()}]`, e);
+        return { "success": false, "message": "Update Failed!" }
     }
 }
