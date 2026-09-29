@@ -18,7 +18,11 @@ router.post("/update", uploadMulter.single("pfp"), async (req, res) => {
         
         console.log(`[PROFILE-UPDATE ${new Date().toDateString()}] Trying to update user: ${jwt}`);
         
-        const data = await UpdateProfile(username, email, n_password_hash, password_hash, image, jwt);
+        const data = await UpdateProfile(
+            username, email,
+            n_password_hash, password_hash,
+            image, jwt, res
+        );
         return res.json(data);
     } catch (e) {
         console.error(`[REGISTER ${new Date().toDateString()}]`, e);

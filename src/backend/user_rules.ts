@@ -4,26 +4,8 @@ import {
 } from "drizzle-orm";
 import * as schema from "../../database/schema";
 
-import jwt from 'jsonwebtoken';
 import { CheckPassword, UploadImage } from "./utilities";
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!")
-
-function GenerateJWT(username: string, email: string, role: string): string {
-    if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!");
-    return jwt.sign(
-        {
-            username: username,
-            email: email,
-            role: role
-        },
-        JWT_SECRET,
-        {
-            expiresIn: "7d",
-        }
-    );
-}
+import { ClearSessions, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
 
 export async function FindUserBySession(jwt: string|undefined|null):
 Promise<
@@ -148,7 +130,7 @@ export async function Login(username: string, password_hash: string) {
 
         console.log(`[DB-LOGIN ${new Date().toDateString()}] login successful as ${username}`);
 
-        const token = GenerateJWT(user.username, user.email, user.role);
+        const token = GenerateJWT(user.id, user.role);
         const sess = await CreateSession(token, user.id);
         if (!sess){
             return {
@@ -161,8 +143,7 @@ export async function Login(username: string, password_hash: string) {
         return {
             "success": true,
             "message":"Login Successful!",
-            "jwt": token,
-            "maxAge": 7 * 24 * 60 * 60 * 1000 // 7d in milliseconds
+            "jwt": token
         }
     } catch (e: any) {
         console.error(`[DB-LOGIN ${new Date().toDateString()}]`, e);
@@ -224,7 +205,8 @@ export async function UpdateProfile(
     n_password_hash: string,
     password_hash: string,
     image: Express.Multer.File|null|undefined,
-    jwt: string|null|undefined
+    jwt: string|null|undefined,
+    res: any
 ) {
     try {
         const user = await FindUserBySession(jwt);
@@ -281,15 +263,30 @@ export async function UpdateProfile(
             n_values.image = img_str;
         }
 
-        console.warn("[!] Applying Updated Profile Data...")
-        console.warn(n_values);
+        // clear old session(s) and generate a new one
+        if (n_password_hash && n_password_hash.length > 0) {
+            if (!await ClearSessions(user.id))
+                return { "success": false, "message": "Update Failed!" }
+
+            // apply the JWT to the user's session
+            const n_token = GenerateJWT(user.id, user.role);
+            const sess = await CreateSession(n_token, user.id);
+            if (!sess) {
+                return { "success": false, "message": "Update Failed!" }
+            }
+
+            res.cookie("token", n_token, {
+                httpOnly: true, // prevent cookie stealing
+                secure: process.env.PROD === "production",
+                sameSite: "lax",
+                maxAge: SESSION_LIFETIME,
+            });
+        }
 
         // update entry values based on uid linked to session (JWT)
         const profileRes = await db.update(schema.users)
             .set(n_values)
             .where(eq(schema.users.id, user.id));
-
-        // clear old session(s) and generate a new one
 
         return { "success": true, "message": "Updated Successfully!" }
     } catch (e: any) {

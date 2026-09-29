@@ -3,7 +3,8 @@ import {
     boolean, integer
 } from "drizzle-orm/pg-core";
 
-const SESSION_LIFETIME = Number(process.env.SESSION_LIFETIME_SECONDS ?? 3600);
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const SESSION_LIFETIME = Number(process.env.SESSION_LIFETIME_DAYS ?? 7) * MS_PER_DAY;
 
 export const users = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -32,7 +33,7 @@ export const sessions = pgTable("sessions", {
     uid: integer("uid").references(() => users.id, { onDelete: "cascade" }).notNull(),
     token: varchar("token", { length: 314 }).notNull(), // JWT
     created_at: timestamp("created_at").defaultNow().notNull(),
-    expires_at: timestamp("expires_at").notNull().$defaultFn(() => new Date(Date.now() + SESSION_LIFETIME * 1000))
+    expires_at: timestamp("expires_at").notNull().$defaultFn(() => new Date(Date.now() + SESSION_LIFETIME))
 });
 
 export const access_logs = pgTable("access_logs", {

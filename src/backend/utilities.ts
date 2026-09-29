@@ -9,7 +9,6 @@ import path from "node:path";
 
 // component shared by server and some routes
 import multer from "multer";
-import { password } from "bun";
 export const uploadMulter = multer({
     storage: multer.memoryStorage(),
     limits: {

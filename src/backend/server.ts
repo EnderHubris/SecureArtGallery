@@ -40,6 +40,7 @@ app.disable('x-powered-by');
 // separate files to reduce clustering multiple
 // endpoints into a single file
 import userRoutes from "./routers/user_router";
+import { CheckSession, SESSION_LIFETIME } from "./session_utils";
 app.use("/user", userRoutes);
 
 app.get("/", async (req, res) => {
@@ -57,7 +58,7 @@ app.post("/login", async (req, res) => {
             httpOnly: true, // prevent cookie stealing
             secure: process.env.PROD === "production",
             sameSite: "lax",
-            maxAge: data.maxAge,
+            maxAge: SESSION_LIFETIME,
         });
 
         return res.json(data);
@@ -86,6 +87,14 @@ app.post("/logout", async (req, res) => {
     try {
         const jwt = req.cookies.token;
         const data = await DeleteSession(jwt);
+        
+        res.clearCookie("token", {
+            httpOnly: true, // prevent cookie stealing
+            secure: process.env.PROD === "production",
+            sameSite: "lax",
+            path: "/",
+        });
+
         return res.json({ "success": true });
     } catch (e) {
         console.error(`[LOGOUT ${new Date().toDateString()}]`, e);
@@ -103,6 +112,28 @@ app.post("/info", async (req, res) => {
         });
     } catch (e) {
         console.error(`[INFO ${new Date().toDateString()}]`, e);
+        res.status(500).send("Server Error");
+    }
+});
+
+app.post("/verify", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        if (!jwt) return res.json({ "success": false });
+
+        const token_valid = await CheckSession(jwt);
+
+        if (!token_valid) {
+            res.clearCookie("token", {
+                httpOnly: true, // prevent cookie stealing
+                secure: process.env.PROD === "production",
+                sameSite: "lax",
+                path: "/",
+            });
+        }
+
+        return res.json({ "success": token_valid });
+    } catch (e) {
         res.status(500).send("Server Error");
     }
 });

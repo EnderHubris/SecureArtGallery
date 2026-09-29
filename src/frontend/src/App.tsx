@@ -36,7 +36,6 @@ function App() {
         });
 
         const result = await response.json();
-        console.log(result);
         setLoggedIn(result.success);
         setUser(result.user);
     };

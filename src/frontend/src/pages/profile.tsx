@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { GetBackendStr, str2sha256 } from "../utilities/utiliies";
+import { useRef, useState, useEffect } from "react";
+import { VerifyLogin, GetBackendStr, str2sha256 } from "../utilities/utiliies";
 
 import Feedback from '../components/feedback';
 
@@ -12,6 +12,17 @@ type UserData = {
 }
 
 export default function Profile({ user } : { user: UserData }) {
+    const [render, SetRender] = useState(false);
+    
+    useEffect(() => {
+        const logic = async () => {
+            const isValid = await VerifyLogin();
+            SetRender(isValid);
+            if (isValid) return;
+            window.location.href = "/login";
+        }
+        logic();
+    }, []);
 
     const pfpRef = useRef<HTMLInputElement>(null);
     
@@ -78,7 +89,7 @@ export default function Profile({ user } : { user: UserData }) {
         }, 3000);
     }
 
-    return (
+    return render && (
     <>
         <div className="container">
             <Feedback success={success} message={msg} />

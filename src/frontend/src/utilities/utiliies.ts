@@ -22,3 +22,17 @@ export function GetBackendStr(dir: string) {
     const url = new URL((import.meta.env.VITE_BACK_END_HOST ?? '/api/') + dir)
     return url.toString();
 }
+
+export async function VerifyLogin(): Promise<boolean> {
+    try {
+        const endpoint = GetBackendStr("/verify");
+        const response = await fetch(endpoint, {
+            method: "POST",
+            credentials: "include",
+        });
+        const result = await response.json();
+        return result.success ?? false;
+    } catch {
+        return false;
+    }
+}
