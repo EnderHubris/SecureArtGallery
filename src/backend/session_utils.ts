@@ -73,7 +73,8 @@ export async function CheckSession(token: string) {
 }
 
 /**
- * Used to check if a user can access a room
+ * Return if the owner of a provided JWT is allowed
+ * to access a resource (reviews the JWT as well)
  * 
  * @param token 
  * @param role_required guest | employee | admin

@@ -43,6 +43,9 @@ import userRoutes from "./routers/user_router";
 import { CheckSession, SESSION_LIFETIME } from "./session_utils";
 app.use("/user", userRoutes);
 
+import adminRoutes from "./routers/admin_router";
+app.use("/admin", adminRoutes);
+
 app.get("/", async (req, res) => {
     res.send("Hello World!");
 });
@@ -105,10 +108,13 @@ app.post("/logout", async (req, res) => {
 app.post("/info", async (req, res) => {
     try {
         const jwt = req.cookies.token;
+
         const data = await FindUserBySession(jwt);
+        const user = data ?? defaultUser
+
         return res.json({
             "success": (data !== null) && (data !== undefined),
-            "user": data ?? defaultUser
+            "user": user
         });
     } catch (e) {
         console.error(`[INFO ${new Date().toDateString()}]`, e);

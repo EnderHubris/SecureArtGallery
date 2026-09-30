@@ -9,6 +9,7 @@ import Home from './pages/home.tsx'
 import Login from './pages/login.tsx'
 import Register from './pages/register.tsx'
 import Profile from './pages/profile.tsx'
+import AdminPanel from './pages/admin.tsx'
 
 // import styling
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -25,6 +26,7 @@ const defaultUser = {
 }
 
 function App() {
+    const [render, SetRender] = useState(false);
     const [loggedIn, setLoggedIn] = useState(false);
     const [user, setUser] = useState(defaultUser);
 
@@ -38,13 +40,14 @@ function App() {
         const result = await response.json();
         setLoggedIn(result.success);
         setUser(result.user);
+        SetRender(true);
     };
 
     useEffect(() => {
         getUserInfo();
     }, []);
     
-    return (
+    return render && (
     <>
         <div className="d-flex vh-100 overflow-hidden">
             {/* Navbar */}
@@ -54,6 +57,7 @@ function App() {
                 <Router>
                     <Routes>
                         <Route path="/" element={<Home />} />
+                        <Route path="/admin" element={<AdminPanel user={user} />} />
                         <Route path="/login" element={<Login afterLogin={getUserInfo} />} />
                         <Route path="/profile" element={<Profile user={user} />} />
                         <Route path="/register" element={<Register />} />
