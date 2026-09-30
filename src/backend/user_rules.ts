@@ -42,7 +42,7 @@ Promise<
     }
 }
 
-async function FindUser(username: string, email: string = ""):
+export async function FindUser(username: string, email: string = ""):
 Promise<
     {
         id: string;
