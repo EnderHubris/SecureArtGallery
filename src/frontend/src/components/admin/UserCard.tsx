@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { GetBackendStr } from "../../utilities/utiliies";
 import { ChangeRole, DeleteUser } from "../../utilities/admin_utils";
-
-type UserData = {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    image: string;
-};
+import type { UserData } from "../m_types";
 
 type Props = {
     self: UserData,

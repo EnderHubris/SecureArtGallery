@@ -2,14 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { VerifyLogin, GetBackendStr, str2sha256 } from "../utilities/utiliies";
 
 import Feedback from '../components/feedback';
-
-type UserData = {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    image: string;
-}
+import type { UserData } from "../components/m_types";
 
 export default function Profile({ user } : { user: UserData }) {
     const [render, SetRender] = useState(false);

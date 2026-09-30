@@ -34,6 +34,12 @@ All brought together through [bun](https://bun.com/) the lightning fast JavaScri
 If you are working on either the front-end or back-end software, if you need to modify the packages included
 via `bun add [package]` or `bun rm [package]`, make sure your terminal's cwd is within either `src/frontend` or `src/backend`.
 
+This project has custom scripts to better handle drizzle *(bunx drizzle-kit migrate was silently failing for an unknown reason)*
+```console
+bun run db:generate -> generates a new .sql if schema has been updated
+bun run db:migrate  -> migrates most recent .sql file into local db
+```
+
 ## System Architecture
 
 
@@ -66,7 +72,8 @@ docker run -d \
   -v pgdata:/var/lib/postgresql/data \
   postgres:16
 bun install .
-bunx drizzle-kit migrate
+bun run db:migrate
+bun run db:reset_admin
 
 # second spin-up the backend API server
 cd src/backend

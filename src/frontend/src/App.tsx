@@ -31,15 +31,20 @@ function App() {
     const [user, setUser] = useState(defaultUser);
 
     const getUserInfo = async () => {
-        const endpoint = GetBackendStr("/info");
-        const response = await fetch(endpoint, {
-            method: "POST",
-            credentials: "include",
-        });
-
-        const result = await response.json();
-        setLoggedIn(result.success);
-        setUser(result.user);
+        try {
+            const endpoint = GetBackendStr("/info");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                credentials: "include",
+            });
+    
+            const result = await response.json();
+            setLoggedIn(result.success);
+            setUser(result.user);
+        } catch {
+            setLoggedIn(false);
+            setUser(defaultUser);
+        }
         SetRender(true);
     };
 

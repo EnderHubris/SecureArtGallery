@@ -13,6 +13,7 @@ export const users = pgTable("users", {
     email: varchar("email", { length: 64 }).unique().notNull(),
     password_hash: varchar("password_hash", { length: 64 }).notNull(),    // SHA-256
     role: varchar("role", { length: 10 }).notNull().default("guest"),     // guest, employee, admin
+    sudo: boolean("sudo").default(false).notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull()
 });
@@ -25,7 +26,7 @@ export const rooms = pgTable("rooms", {
 // one room can have many adjacent rooms
 export const room_adjacency = pgTable("room_adjacency", {
     id: serial("id").primaryKey(),
-    adj_id: integer("adj_id").references(() => rooms.id).notNull(),
+    adj_id: integer("adj_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
 });
 
 export const sessions = pgTable("sessions", {
@@ -40,8 +41,8 @@ export const access_logs = pgTable("access_logs", {
     id: serial("id").primaryKey(),
 
     uid: integer("uid").references(() => users.id).notNull(),
-    src_room_id: integer("src_room_id").references(() => rooms.id).notNull(),
-    dst_room_id: integer("dst_room_id").references(() => rooms.id).notNull(),
+    src_room_id: integer("src_room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
+    dst_room_id: integer("dst_room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
     sid: integer("sid").references(() => sessions.id).notNull(),
     
     action: varchar("action", { length: 32 }).unique().notNull(), // @todo - declare a list of actions

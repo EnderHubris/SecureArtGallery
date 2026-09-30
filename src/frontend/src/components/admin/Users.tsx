@@ -3,14 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { GetBackendStr } from "../../utilities/utiliies";
 
 import UserCard from './UserCard';
-
-type UserData = {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    image: string;
-};
+import type { UserData } from "../m_types";
 
 type Props = {
     user: UserData,

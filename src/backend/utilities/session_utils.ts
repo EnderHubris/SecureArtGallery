@@ -1,8 +1,8 @@
-import { db } from "./db";
+import { db } from "../db";
 import {
     eq
 } from "drizzle-orm";
-import * as schema from "../../database/schema";
+import * as schema from "../../../database/schema";
 
 import crypto from 'node:crypto';
 

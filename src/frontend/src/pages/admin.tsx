@@ -8,14 +8,7 @@ import CreateEmployee from "../components/admin/CreateEmployee";
 import Users from "../components/admin/Users";
 import ViewLogs from "../components/admin/ViewLogs";
 
-type Tab = "create" | "users" | "logs";
-type UserData = {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    image: string;
-}
+import type { Tab, UserData } from "../components/m_types";
 
 export default function AdminPanel({ user } : { user: UserData }) {
     const [searchParams, setSearchParams] = useSearchParams();

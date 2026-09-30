@@ -1,11 +1,39 @@
-import { db } from "./db";
+import { db } from "../db";
 import {
     eq, or
 } from "drizzle-orm";
-import * as schema from "../../database/schema";
+import * as schema from "../../../database/schema";
 
-import { CheckPassword, UploadImage } from "./utilities";
+import { CheckPassword, UploadImage } from "./general";
 import { ClearSessions, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
+
+export async function FindUserByID(uid: string):
+Promise<
+    {
+        id: string;
+        username: string;
+        email: string;
+        role: string;
+        image: string;
+        sudo: boolean;
+    } | null | undefined
+> {
+    try {
+        const [user] = await db.select({
+            id: schema.users.id,
+            username: schema.users.username,
+            email: schema.users.email,
+            role: schema.users.role,
+            image: schema.users.image,
+            sudo: schema.users.sudo,
+        }).from(schema.users)
+        .where(eq(schema.users.id, uid)).limit(1);
+
+        return user;
+    } catch {
+        return null;
+    }
+}
 
 export async function FindUserBySession(jwt: string|undefined|null):
 Promise<
@@ -15,6 +43,7 @@ Promise<
         email: string;
         role: string;
         image: string;
+        sudo: boolean;
     } | null | undefined
 > {
     try {
@@ -33,6 +62,7 @@ Promise<
             email: schema.users.email,
             role: schema.users.role,
             image: schema.users.image,
+            sudo: schema.users.sudo,
         }).from(schema.users)
         .where(eq(schema.users.id, sess.uid)).limit(1);
 
@@ -51,6 +81,7 @@ Promise<
         email: string;
         role: string;
         image: string;
+        sudo: boolean;
     } | null | undefined
 > {
     try {
@@ -61,6 +92,7 @@ Promise<
             email: schema.users.email,
             role: schema.users.role,
             image: schema.users.image,
+            sudo: schema.users.sudo,
         }).from(schema.users)
         .where(or(
             eq(schema.users.username, username),

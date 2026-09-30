@@ -28,33 +28,31 @@ try {
         .update(process.env.ADM_PASSWORD)
         .digest("hex");
 
-    const admin = await db
-        .select()
+    const defaultAdmin = {
+        username: process.env.ADM_USERNAME ?? "admin",
+        email: process.env.ADM_EMAIL,
+        password_hash,
+        role: "admin",
+        sudo: true,
+    }
+
+    // find super admin account
+    const [superAdmin] = await db.select()
         .from(schema.users)
-        .where(eq(schema.users.role, "admin"))
+        .where(eq(schema.users.sudo, true))
         .limit(1);
 
-    if (admin.length > 0) {
+    if (superAdmin) {
         // update existing entry
         await db
             .update(schema.users)
-            .set({
-                username: process.env.ADM_USERNAME ?? "admin",
-                email: process.env.ADM_EMAIL,
-                password_hash,
-                role: "admin",
-            })
-            .where(eq(schema.users.id, admin[0].id));
-        console.log("[+] Admin Reset!")
+            .set(defaultAdmin)
+            .where(eq(schema.users.sudo, true));
+        console.log("[+] Super Admin Reset!")
     } else {
-        // create new admin
-        await db.insert(schema.users).values({
-            username: process.env.ADM_USERNAME ?? "admin",
-            email: process.env.ADM_EMAIL,
-            password_hash,
-            role: "admin",
-        });
-        console.log("[+] Admin Inserted!")
+        // create new super admin
+        await db.insert(schema.users).values(defaultAdmin);
+        console.log("[+] Super Admin Inserted!")
     }
 
     process.exit(0);

@@ -1,8 +1,8 @@
 import { Router } from "express";
 const router = Router();
 
-import { uploadMulter } from '../utilities';
-import { UpdateProfile } from "../user_rules";
+import { uploadMulter } from '../utilities/general';
+import { UpdateProfile } from "../utilities/user_rules";
 
 // expands end-point root '/user'
 router.post("/update", uploadMulter.single("pfp"), async (req, res) => {

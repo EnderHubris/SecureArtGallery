@@ -3,7 +3,7 @@ import {
     eq, sql
 } from "drizzle-orm";
 import * as schema from "../../database/schema";
-import { FindUser, FindUserBySession } from "./user_rules";
+import { FindUser, FindUserByID, FindUserBySession } from "./utilities/user_rules";
 import { password } from "bun";
 
 const roleMap: Record<string, number> = {
@@ -48,6 +48,10 @@ export async function DeleteUser(token:string, uid: string) {
 
         if (user.id === uid)
             return { success: false, message: "Cannot Self-Delete!" }
+
+        const delTarget = await FindUserByID(uid);
+        if (delTarget && delTarget.sudo)
+            return { success: false, message: "Cannot Delete Super Admin!" }
 
         await db.delete(schema.users)
             .where(eq(schema.users.id, uid));

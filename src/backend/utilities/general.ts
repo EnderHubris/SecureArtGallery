@@ -1,8 +1,8 @@
-import { db } from "./db";
+import { db } from "../db";
 import {
     eq, or
 } from "drizzle-orm";
-import * as schema from "../../database/schema";
+import * as schema from "../../../database/schema";
 
 import { mkdir } from "node:fs/promises";
 import path from "node:path";

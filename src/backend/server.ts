@@ -3,8 +3,8 @@ import express from "express";
 import cors from 'cors';
 import path from "node:path";
 
-import { DeleteSession, FindUserBySession, Login, Register } from "./user_rules";
-import { UPLOAD_DIR, uploadMulter } from "./utilities";
+import { DeleteSession, FindUserBySession, Login, Register } from "./utilities/user_rules";
+import { UPLOAD_DIR, uploadMulter } from "./utilities/general";
 
 const app = express();
 const port = 8888;
@@ -40,7 +40,7 @@ app.disable('x-powered-by');
 // separate files to reduce clustering multiple
 // endpoints into a single file
 import userRoutes from "./routers/user_router";
-import { CheckSession, SESSION_LIFETIME } from "./session_utils";
+import { CheckSession, SESSION_LIFETIME } from "./utilities/session_utils";
 app.use("/user", userRoutes);
 
 import adminRoutes from "./routers/admin_router";

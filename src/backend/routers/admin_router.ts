@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { ChangeRole, CreateNewEmployee, DeleteUser, GetAllUsers } from "../admin_rules";
-import { AccessCheck } from "../session_utils";
+import { AccessCheck } from "../utilities/session_utils";
 const router = Router();
 
 /**
