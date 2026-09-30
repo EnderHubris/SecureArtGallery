@@ -67,10 +67,6 @@ export default function Profile({ user } : { user: UserData }) {
             // clear file input element value
             if (pfpRef.current)
                 pfpRef.current.value = "";
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 3100);
         }
 
         SetSuccess(result.success);
@@ -79,14 +75,16 @@ export default function Profile({ user } : { user: UserData }) {
         // clear feedback after some time
         setTimeout(() => {
             SetMsg(null);
-        }, 3000);
+            if (result.success)
+                window.location.reload();
+        }, result.success ? 1000 : 3000);
     }
 
     return render && (
     <>
         <div className="container">
+            <div className="row d-flex justify-content-center align-items-start h-100">
             <Feedback success={success} message={msg} />
-            <div className="row justify-content-center align-items-start">
 
                 {/* Profile Preview */}
                 <div className="col-12 col-md-8 col-lg-3 mb-4 mb-lg-0 order-first order-lg-last">

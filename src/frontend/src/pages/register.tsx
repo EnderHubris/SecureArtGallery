@@ -57,7 +57,9 @@ export default function Register() {
         // clear feedback after some time
         setTimeout(() => {
             SetMsg(null);
-        }, 3000);
+            if (result.success)
+                window.location.href = "/login";
+        }, result.success ? 1000 : 3000);
     }
 
     return (

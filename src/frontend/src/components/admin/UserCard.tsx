@@ -34,7 +34,7 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
             result.message
         );
         if (result.success)
-            setTimeout(() => LoadUsers(), 3200)
+            LoadUsers();
     }
 
     return (

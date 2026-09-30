@@ -39,7 +39,9 @@ export default function Login({ afterLogin }) {
         // clear feedback after some time
         setTimeout(() => {
             SetMsg(null);
-        }, 3000);
+            if (result.success)
+                window.location.href = "/";
+        }, result.success ? 1000 : 3000);
     }
 
     return (
