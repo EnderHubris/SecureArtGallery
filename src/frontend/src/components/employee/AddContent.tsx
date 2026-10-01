@@ -15,12 +15,12 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
     const [n_image, SetImage] = useState<File|null|undefined>(null);
     const [room_id, SetRoomID] = useState<string>("1");
 
-    function updateImageFile(e) {
+    function updateImageFile(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         const file = e.target.files?.[0] ?? null;
         SetImage(file);
     }
 
-    async function handleCreation(e) {
+    async function handleCreation(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
         
         if (!n_image) {
@@ -108,7 +108,7 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
                             type="file"
                             className="form-control"
                             accept="image/png,image/jpeg"
-                            onChange={updateImageFile}
+                            onChange={(e) => updateImageFile(e)}
                             ref={galleryImgRef}
                         />
 

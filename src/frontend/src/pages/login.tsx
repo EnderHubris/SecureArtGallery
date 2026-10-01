@@ -3,14 +3,14 @@ import { str2sha256, GetBackendStr } from '../utilities/utiliies';
 
 import Feedback from '../components/feedback';
 
-export default function Login({ afterLogin }) {
+export default function Login({ afterLogin } : { afterLogin: () => void }) {
     const [username, SetUsername] = useState("");
     const [password, SetPassword] = useState("");
 
     const [success, SetSuccess] = useState(false);
     const [msg, SetMsg] = useState<string|undefined|null>("");
     
-    async function sendLogin(e) {
+    async function sendLogin(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
 
         const endpoint = GetBackendStr("/login");
@@ -55,7 +55,7 @@ export default function Login({ afterLogin }) {
                         <div className="card-body p-5 text-center">
                             <form 
                                 className="pb-4"
-                                onSubmit={sendLogin}
+                                onSubmit={(e) => sendLogin(e)}
                             >
                                 <h2 className="fw-bold mb-4 text-uppercase">Login</h2>
 

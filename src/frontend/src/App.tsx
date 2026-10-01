@@ -17,20 +17,22 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import './App.css'
 import { useEffect, useState } from 'react';
 import { GetBackendStr } from './utilities/utiliies.ts';
+import type { UserData } from './components/m_types.ts';
 
-const defaultUser = {
+const defaultUser: UserData = {
     id: "0",
     username: "guest",
     email: "",
     role: "guest",
     image: "guest.png",
+    banned: false,
     sudo: false,
 }
 
 function App() {
     const [render, SetRender] = useState(false);
     const [loggedIn, setLoggedIn] = useState(false);
-    const [user, setUser] = useState(defaultUser);
+    const [user, setUser] = useState<UserData>(defaultUser);
 
     const getUserInfo = async () => {
         try {

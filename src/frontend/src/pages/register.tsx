@@ -14,12 +14,12 @@ export default function Register() {
     const [success, SetSuccess] = useState(false);
     const [msg, SetMsg] = useState<string|undefined|null>("");
 
-    function updateImageFile(e) {
+    function updateImageFile(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         const file = e.target.files?.[0] ?? null;
         SetImage(file);
     }
     
-    async function sendRegister(e) {
+    async function sendRegister(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
 
         // needed because image cannot be pushed in a JSON object
@@ -71,7 +71,7 @@ export default function Register() {
                 <div className="col-12 col-md-8 col-lg-6 col-xl-5">
                     <div className="card">
                         <div className="card-body p-5 text-center">
-                            <form className="pb-4" onSubmit={sendRegister}>
+                            <form className="pb-4" onSubmit={(e) => sendRegister(e)}>
                                 <h2 className="fw-bold mb-4 text-uppercase">
                                     Register
                                 </h2>
@@ -114,7 +114,7 @@ export default function Register() {
                                         type="file"
                                         className="form-control"
                                         accept="image/png,image/jpeg"
-                                        onChange={updateImageFile}
+                                        onChange={(e) => updateImageFile(e)}
                                         ref={pfpRef}
                                     />
 

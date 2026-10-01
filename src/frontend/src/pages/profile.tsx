@@ -29,12 +29,12 @@ export default function Profile({ user } : { user: UserData }) {
     const [success, SetSuccess] = useState(false);
     const [msg, SetMsg] = useState<string|undefined|null>("");
 
-    function updateImageFile(e) {
+    function updateImageFile(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         const file = e.target.files?.[0] ?? null;
         SetImage(file);
     }
     
-    async function updateProfile(e) {
+    async function updateProfile(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
 
         // needed because image cannot be pushed in a JSON object
@@ -158,7 +158,7 @@ export default function Profile({ user } : { user: UserData }) {
                                         type="file"
                                         className="form-control"
                                         accept="image/png,image/jpeg"
-                                        onChange={updateImageFile}
+                                        onChange={(e) => updateImageFile(e)}
                                         ref={pfpRef}
                                     />
 

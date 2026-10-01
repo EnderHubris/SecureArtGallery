@@ -11,7 +11,7 @@ export default function CreateEmployee({ feedback }: Props) {
     const [password, SetPassword] = useState("");
     const [role, SetRole] = useState("employee");
 
-    async function handleCreation(e) {
+    async function handleCreation(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
         
         const result = await CreateNewEmployee({ username, email, password, role });
@@ -33,7 +33,7 @@ export default function CreateEmployee({ feedback }: Props) {
                 <form
                     className="w-100"
                     style={{ maxWidth: "600px" }}
-                    onSubmit={handleCreation}
+                    onSubmit={(e) => handleCreation(e)}
                 >
                     <div className="text-center mb-4">
                         <h2 className="fw-bold text-uppercase mb-2">

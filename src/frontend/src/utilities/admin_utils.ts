@@ -107,7 +107,17 @@ export async function ChangeRole(uid: string, role: string): Promise<{
     }
 }
 
-export async function CreateNewEmployee({ username, email, password, role }): Promise<{
+export async function CreateNewEmployee({
+        username,
+        email,
+        password,
+        role
+    } : {
+        username: string,
+        email: string,
+        password: string,
+        role: string
+}): Promise<{
     success: boolean;
     message: string;
 }> {

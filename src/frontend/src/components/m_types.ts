@@ -1,10 +1,10 @@
 export type Tab = "manage" | "create" | "users" | "logs";
 export type UserData = {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    image: string;
+    id: string,
+    username: string,
+    email: string,
+    role: string,
+    image: string,
     banned: boolean,
     sudo: boolean,
 };
