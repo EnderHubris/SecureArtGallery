@@ -40,7 +40,13 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
         });
 
         const result = await response.json();
-        console.log(result);
+        if (result.success) {
+            // clear file input element value
+            SetImage(null);
+
+            if (galleryImgRef.current)
+                galleryImgRef.current.value = "";
+        }
         
         feedback(
             result.success,

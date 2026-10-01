@@ -105,6 +105,14 @@ export default function GalleryManage({ user, feedback }: Props) {
                                     {room.name}
                                 </h5>
 
+                                {room.is_restricted && (
+                                    <span className="badge text-bg-danger">Restricted</span>
+                                )}
+
+                                <p className="card-text text-muted mb-0">
+                                    Room ID: {room.id}
+                                </p>
+
                                 <p className="card-text text-muted mb-0">
                                     Occupancy: {userCounts[i]} / {room.occupancy}
                                 </p>
@@ -136,16 +144,40 @@ export default function GalleryManage({ user, feedback }: Props) {
                 <h4>Gallery Images</h4>
             </div>
 
-            <div className="row g-3">
-                <ul>
+            <div className="row g-4">
                 {images.map((image: GalleryImage) => (
-                    <li key={image.id}>
-                        <img src={
-                            GetBackendStr(`/gallery/${image.image}`)
-                        } />
-                    </li>
+                    <div
+                        className="col-12 col-sm-6 col-lg-4 col-xl-3"
+                        key={image.id}
+                    >
+                        <div
+                            className="p-2 shadow"
+                            style={{
+                                backgroundColor: "#5a3a22",
+                                border: "8px solid #8b5e34",
+                                borderRadius: "4px",
+                            }}
+                        >
+                            <div
+                                className="p-2"
+                                style={{
+                                    backgroundColor: "#1f1f1f",
+                                }}
+                            >
+                                <img
+                                    src={GetBackendStr(`/gallery/${image.image}`)}
+                                    alt=""
+                                    className="w-100 d-block"
+                                    style={{
+                                        height: "220px",
+                                        objectFit: "cover",
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <figcaption>Located at Room ID: <b>{image.room_id}</b></figcaption>
+                    </div>
                 ))}
-                </ul>
             </div>
 
             <div className="d-flex justify-content-center align-items-center gap-3 mt-4">

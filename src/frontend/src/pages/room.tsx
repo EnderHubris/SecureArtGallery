@@ -90,15 +90,38 @@ export default function Room() {
             </div>
 
             <div className="card shadow-sm mt-4">
-                <div className="row g-3">
+                <div className="row g-4">
                     {galleryImages.map((image: GalleryImage) => (
-                        <img
+                        <div
+                            className="col-12 col-sm-6 col-lg-4 col-xl-3"
                             key={image.id}
-                            style={{ width: "400px" }}
-                            src={
-                                GetBackendStr(`/gallery/${image.image}`)
-                            }
-                        />
+                        >
+                            <div
+                                className="p-2 shadow"
+                                style={{
+                                    backgroundColor: "#5a3a22",
+                                    border: "8px solid #8b5e34",
+                                    borderRadius: "4px",
+                                }}
+                            >
+                                <div
+                                    className="p-2"
+                                    style={{
+                                        backgroundColor: "#1f1f1f",
+                                    }}
+                                >
+                                    <img
+                                        src={GetBackendStr(`/gallery/${image.image}`)}
+                                        alt=""
+                                        className="w-100 d-block"
+                                        style={{
+                                            height: "220px",
+                                            objectFit: "cover",
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     ))}
                 </div>
             </div>
