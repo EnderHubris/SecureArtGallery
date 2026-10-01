@@ -1,0 +1,1 @@
+ALTER TABLE "access_logs" DROP CONSTRAINT "access_logs_action_unique";

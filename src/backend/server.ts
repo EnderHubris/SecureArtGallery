@@ -37,6 +37,7 @@ app.use(cors({
     credentials: true,
 }));
 app.disable('x-powered-by');
+app.set("trust proxy", true); // help forward client IP when behind NGINX/Cloudflare, etc
 
 // routes are used to divide backend routing logic into
 // separate files to reduce clustering multiple
@@ -159,8 +160,6 @@ app.get("/get_room", async (req, res) => {
             adjacent: await FindAdjacentRooms(currRoom.id),
             peopleInRoom: await GetRoomCount(currRoom)
         }
-        
-        console.log(data);
 
         return res.json(data);
     } catch (e) {
@@ -186,7 +185,7 @@ app.post("/enter_room", async (req, res) => {
             }
         }
 
-        return res.json(await EnterRoom(jwt, id));
+        return res.json(await EnterRoom(jwt, id, req));
     } catch (e) {
         return res.status(500).send("Server Error");
     }

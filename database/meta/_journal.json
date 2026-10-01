@@ -15,6 +15,20 @@
       "when": 1790875967549,
       "tag": "0001_spooky_preak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790887777769,
+      "tag": "0002_ambitious_morph",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790890193244,
+      "tag": "0003_mixed_maestro",
+      "breakpoints": true
     }
   ]
 }

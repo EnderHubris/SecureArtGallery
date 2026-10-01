@@ -4,6 +4,7 @@ import { AccessCheck } from "../utilities/session_utils";
 import { GetAllGalleryImages, GetAllUsers, KickUser, uploadMulter } from "../utilities/general";
 import { GetAllRooms } from "../utilities/room_rules";
 import { UploadGalleryImage } from "../utilities/gallery_rules";
+import { GetActionLogs } from "../utilities/log_rules";
 const router = Router();
 
 /**
@@ -152,6 +153,16 @@ router.post("/upload_content", uploadMulter.single("g_img"), async (req, res) =>
     } catch (e) {
         console.error(`[UPLOAD-CONTENT ${new Date().toDateString()}]`, e);
         res.status(500).send("Server Error");
+    }
+});
+
+router.post("/get_actions", async (req, res) => {
+    try {
+        const { page } = req.body;
+        console.log("[!] Admin Fetching Action Logs");
+        return res.json(await GetActionLogs(Number(page ?? 1)));
+    } catch (e) {
+        return res.status(500).send("Server Error");
     }
 });
 

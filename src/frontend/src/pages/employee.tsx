@@ -95,7 +95,7 @@ export default function AdminPanel({ user } : { user: UserData }) {
             )} {activeTab === "users" && (
                 <Users user={user} feedback={feedback} />
             )} {activeTab === "logs" && (
-                <ViewLogs feedback={feedback} />
+                <ViewLogs user={user} feedback={feedback} />
             )}
         </div>
     </>

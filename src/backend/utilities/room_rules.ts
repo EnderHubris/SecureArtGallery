@@ -4,6 +4,7 @@ import {
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
 import { FindUserByID, FindUserBySession } from "./user_rules";
+import { TrackMovement } from "./log_rules";
 
 export type RoomData = {
     id: number,
@@ -169,7 +170,7 @@ async function IsRoomFull(room: RoomData) {
     }
 }
 
-export async function EnterRoom(token: string, dest_id: number): Promise<{ success: boolean, message: string }> {
+export async function EnterRoom(token: string, dest_id: number, req): Promise<{ success: boolean, message: string }> {
     try {
         // check if from the session this move is legal
         const [session] = await db.select({
@@ -232,6 +233,14 @@ export async function EnterRoom(token: string, dest_id: number): Promise<{ succe
         }).where(eq(schema.sessions.token, token));
 
         console.log(`[ENTER-ROOM ${new Date().toDateString()}] Session ${token} has moved ${session.current_room_id} -> ${dest_id}`);
+
+        await TrackMovement(
+            req.ip,
+            "ENTERED",
+            user.id,
+            session.current_room_id,
+            dest_id
+        );
 
         return {
             success: true,

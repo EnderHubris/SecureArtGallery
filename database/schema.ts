@@ -57,10 +57,9 @@ export const access_logs = pgTable("access_logs", {
     uid: integer("uid").references(() => users.id).notNull(),
     src_room_id: integer("src_room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
     dst_room_id: integer("dst_room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
-    sid: integer("sid").references(() => sessions.id).notNull(),
-    
-    action: varchar("action", { length: 32 }).unique().notNull(), // @todo - declare a list of actions
-    ip_address: varchar("ip_address", { length: 24 }).unique().notNull(),
+    action: varchar("action", { length: 32 }).notNull(), // @todo - declare a list of actions
+    ip_address: varchar("ip_address", { length: 24 }).notNull(),
+
     created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
