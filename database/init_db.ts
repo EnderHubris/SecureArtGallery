@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import {
-    eq
+    eq, sql
 } from "drizzle-orm";
 import * as schema from "./schema";
 import { createHash } from "node:crypto";
@@ -63,12 +63,6 @@ try {
 
 // defining the gallery layout
 try {
-    const rooms = await db.select().from(schema.rooms);
-    if (rooms.length > 0) {
-        console.warn("[!] There are existing rooms, skipping layout generation step...");
-        process.exit(0);
-    }
-
     console.log(`[!] Creating Room-Layout: ${dbu}/${dbname}`);
 
     /**
@@ -90,12 +84,18 @@ try {
      */
 
     const inserted = await db.insert(schema.rooms).values([
-        { name: "Lobby" },
+        { name: "Lobby", occupancy: 35 },
         { name: "Hall A" },
-        { name: "Hall B" },
+        { name: "Hall B", occupancy: 25 },
         { name: "Hall C" },
         { name: "Restricted Hall", is_restricted: true },
-    ]).returning();
+    ]).onConflictDoUpdate({
+        target: schema.rooms.name,
+        set: {
+            occupancy: sql`excluded.occupancy`,
+            is_restricted: sql`excluded.is_restricted`,
+        },
+    }).returning();
 
     const id = Object.fromEntries(inserted.map(r => [r.name, r.id]));
 
@@ -114,7 +114,7 @@ try {
             { room_id: id[a], adj_id: id[b] },
             { room_id: id[b], adj_id: id[a] },
         ])
-    );
+    ).onConflictDoNothing();
 
     console.log(`[+] Inserted ${inserted.length} rooms, ${edges.length * 2} adjacency rows`);
     process.exit(0);

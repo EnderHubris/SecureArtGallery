@@ -11,6 +11,13 @@ CREATE TABLE "access_logs" (
 	CONSTRAINT "access_logs_ip_address_unique" UNIQUE("ip_address")
 );
 --> statement-breakpoint
+CREATE TABLE "gallery_images" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"image" varchar(42) NOT NULL,
+	"room_id" integer NOT NULL,
+	CONSTRAINT "gallery_images_image_room_id_unique" UNIQUE("image","room_id")
+);
+--> statement-breakpoint
 CREATE TABLE "room_adjacency" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"room_id" integer NOT NULL,
@@ -21,7 +28,9 @@ CREATE TABLE "rooms" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "rooms_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"name" varchar(24) NOT NULL,
 	"is_restricted" boolean DEFAULT false NOT NULL,
-	CONSTRAINT "rooms_name_unique" UNIQUE("name")
+	"occupancy" integer DEFAULT 15 NOT NULL,
+	CONSTRAINT "rooms_name_unique" UNIQUE("name"),
+	CONSTRAINT "capacity_range" CHECK ("rooms"."occupancy" >= 15 AND "rooms"."occupancy" <= 75)
 );
 --> statement-breakpoint
 CREATE TABLE "sessions" (
@@ -51,6 +60,7 @@ ALTER TABLE "access_logs" ADD CONSTRAINT "access_logs_uid_users_id_fk" FOREIGN K
 ALTER TABLE "access_logs" ADD CONSTRAINT "access_logs_src_room_id_rooms_id_fk" FOREIGN KEY ("src_room_id") REFERENCES "public"."rooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "access_logs" ADD CONSTRAINT "access_logs_dst_room_id_rooms_id_fk" FOREIGN KEY ("dst_room_id") REFERENCES "public"."rooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "access_logs" ADD CONSTRAINT "access_logs_sid_sessions_id_fk" FOREIGN KEY ("sid") REFERENCES "public"."sessions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "gallery_images" ADD CONSTRAINT "gallery_images_room_id_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."rooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "room_adjacency" ADD CONSTRAINT "room_adjacency_room_id_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."rooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "room_adjacency" ADD CONSTRAINT "room_adjacency_adj_id_rooms_id_fk" FOREIGN KEY ("adj_id") REFERENCES "public"."rooms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_uid_users_id_fk" FOREIGN KEY ("uid") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

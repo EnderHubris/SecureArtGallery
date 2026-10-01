@@ -10,7 +10,8 @@ export type UserData = {
 export type RoomData = {
     id: number,
     name: string,
-    is_restricted: boolean
+    is_restricted: boolean,
+    occupancy: number,
 }
 export type GalleryImage = {
     id: string,

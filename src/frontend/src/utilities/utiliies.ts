@@ -2,6 +2,9 @@
  * @description These utilities are browser compatible
  */
 
+import type { RoomData } from "../components/m_types";
+import { lobbyRoom } from "./room_utils";
+
 // method is specifically made for running in the browser
 export async function str2sha256(value: string): Promise<string> {
     if (value.length === 0) return "";
@@ -44,12 +47,9 @@ export async function VerifyLogin(): Promise<boolean> {
  * @returns 
  */
 export async function GetRoomInfo(): Promise<{
-    room: {
-        id: number,
-        name: string,
-        is_restricted: boolean
-    },
-    adjacent: { id: number, name: string }[]
+    room: RoomData,
+    adjacent: { id: number, name: string }[],
+    peopleInRoom: number,
 }> {
     try {
         const endpoint = GetBackendStr("/get_room");
@@ -60,12 +60,9 @@ export async function GetRoomInfo(): Promise<{
         return result;
     } catch {
         return {
-            room: {
-                id: 1,
-                name: "Lobby",
-                is_restricted: false
-            },
-            adjacent: []
+            room: lobbyRoom,
+            adjacent: [],
+            peopleInRoom: 1
         }
     }
 }

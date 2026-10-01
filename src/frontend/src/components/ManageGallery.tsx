@@ -14,6 +14,14 @@ type Props = {
 export default function GalleryManage({ user, feedback }: Props) {
     const [render, SetRender] = useState(false);
     const [rooms, SetRooms] = useState<RoomData[]>([]);
+    
+    const [users, SetUsers] = useState<Array<{
+        uid: number;
+        username: string;
+        email: string;
+    }[]>>([]);
+
+    const [userCounts, SetUserCounts] = useState<number[]>([]);
     const [images, SetImages] = useState<GalleryImage[]>([]);
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -42,6 +50,9 @@ export default function GalleryManage({ user, feedback }: Props) {
             );
 
             SetRooms(result.rooms ?? []);
+            SetUserCounts(result.counts ?? []);
+            SetUsers(result.users ?? []);
+
             SetRender(true);
         } catch (error) {
             console.error(error);
@@ -68,8 +79,6 @@ export default function GalleryManage({ user, feedback }: Props) {
             });
             const result = await response.json();
 
-            console.log(result);
-
             SetImages(result.content);
         } catch (error) {
             console.error(error);
@@ -83,6 +92,46 @@ export default function GalleryManage({ user, feedback }: Props) {
 
     return render && (
         <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h4>Room Overview</h4>
+            </div>
+
+            <div className="row g-3">
+                {rooms.map((room, i) => (
+                    <div className="col-12 col-md-6 col-lg-4" key={room.id}>
+                        <div className="card h-100 shadow-sm">
+                            <div className="card-body">
+                                <h5 className="card-title">
+                                    {room.name}
+                                </h5>
+
+                                <p className="card-text text-muted mb-0">
+                                    Occupancy: {userCounts[i]} / {room.occupancy}
+                                </p>
+
+                                { (users[i] && users[i].length > 0) && (
+                                    <details>
+                                        <summary>Users:</summary>
+                                        <ul className="badge text-bg-primary">
+                                            {users[i].map( (user: {
+                                                    uid: number;
+                                                    username: string;
+                                                    email: string;
+                                                }) => (
+                                                <li key={user.uid}>
+                                                    {user.username} - {user.email}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </details>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <hr/>
+
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h4>Gallery Images</h4>
             </div>

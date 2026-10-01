@@ -46,7 +46,7 @@ import { CheckSession, GetSession, SESSION_LIFETIME } from "./utilities/session_
 app.use("/user", userRoutes);
 
 import adminRoutes from "./routers/admin_router";
-import { EnterRoom, FindAdjacentRooms, FindRoomFromToken, lobbyRoom } from "./utilities/room_rules";
+import { EnterRoom, FindAdjacentRooms, FindRoomFromToken, GetRoomCount, lobbyRoom } from "./utilities/room_rules";
 app.use("/admin", adminRoutes);
 
 import employeeRoutes from "./routers/employee_router";
@@ -142,25 +142,27 @@ app.post("/verify", async (req, res) => {
 app.get("/get_room", async (req, res) => {
     try {
         const jwt = req.cookies.token;
-        if (!jwt)
-            return res.json({
-                room: lobbyRoom,
-                adjacent: []
-            });
+        const defaultData = {
+            room: lobbyRoom,
+            adjacent: [],
+            peopleInRoom: 1
+        }
 
-        if (!await TestSession(jwt, res)) {
-            return res.json({
-                room: lobbyRoom,
-                adjacent: []
-            });
+        if (!jwt || !await TestSession(jwt, res)) {
+            return res.json(defaultData);
         }
 
         // only those with tokens can get adjacent rooms
         const currRoom = await FindRoomFromToken(jwt);
-        return res.json({
+        const data = {
             room: currRoom,
-            adjacent: await FindAdjacentRooms(currRoom.id)
-        });
+            adjacent: await FindAdjacentRooms(currRoom.id),
+            peopleInRoom: await GetRoomCount(currRoom)
+        }
+        
+        console.log(data);
+
+        return res.json(data);
     } catch (e) {
         return res.status(500).send("Server Error");
     }

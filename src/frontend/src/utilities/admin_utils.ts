@@ -1,3 +1,7 @@
+/**
+ * @description These utilities are browser compatible
+ */
+
 import { GetBackendStr, str2sha256 } from "./utiliies";
 
 export async function DeleteUser(uid: string): Promise<{

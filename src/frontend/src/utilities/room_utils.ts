@@ -1,4 +1,16 @@
+/**
+ * @description These utilities are browser compatible
+ */
+
+import type { RoomData } from "../components/m_types";
 import { GetBackendStr } from "./utiliies";
+
+export const lobbyRoom: RoomData = {
+    id: 1,
+    name: "Lobby",
+    is_restricted: false,
+    occupancy: 35
+}
 
 export async function EnterRoom(room_id: number): Promise<{
     success: boolean;

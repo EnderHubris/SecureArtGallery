@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { GetBackendStr, GetRoomInfo } from "../utilities/utiliies";
 import type { RoomData, GalleryImage } from "../components/m_types";
-import { EnterRoom } from "../utilities/room_utils";
+import { EnterRoom, lobbyRoom } from "../utilities/room_utils";
 import Feedback from "../components/feedback";
 
 export default function Room() {
     const [render, SetRender] = useState(false);
     
-    const [room, SetRoom] = useState<RoomData>(
-        { id: 1, name: "Lobby", is_restricted: false }
-    );
+    const [room, SetRoom] = useState<RoomData>(lobbyRoom);
     const [adjacent, SetAdjacent] = useState<{ id: number, name: string }[]>([]);
+    const [userCount, SetUserCount] = useState<number>(1);
 
     const [galleryImages, SetGalleryImages] = useState<GalleryImage[]>([]);
 
@@ -34,8 +33,13 @@ export default function Room() {
 
     const FetchRoomData = async () => {
         const data = await GetRoomInfo();
+        
+        console.log(data);
+
         SetRoom(data.room);
         SetAdjacent(data.adjacent);
+        SetUserCount(data.peopleInRoom);
+        
         await GetImages();
     }
 
@@ -71,11 +75,17 @@ export default function Room() {
             <div className="card shadow-sm">
                 <div className="card-body text-center">
                     <h1 className="display-6 mb-2">Welcome to the {room.name}!</h1>
-                    {room.is_restricted ? (
-                        <span className="badge text-bg-danger">Restricted Area</span>
-                    ) : (
-                        <span className="badge text-bg-success">Open to Visitors</span>
-                    )}
+
+                    <div className="d-flex align-items-center justify-content-center gap-3">
+                        {room.is_restricted ? (
+                            <span className="badge text-bg-danger">Restricted Area</span>
+                        ) : (
+                            <span className="badge text-bg-success">Open to Visitors</span>
+                        )}
+
+                        <span className="badge text-bg-primary">Occupancy {room.occupancy} </span>
+                        <span className="badge text-bg-secondary">People {userCount} </span>
+                    </div>
                 </div>
             </div>
 

@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1790796041409,
-      "tag": "0000_steep_deathstrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1790817009821,
-      "tag": "0001_narrow_night_thrasher",
+      "when": 1790870957065,
+      "tag": "0000_neat_falcon",
       "breakpoints": true
     }
   ]

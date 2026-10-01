@@ -1,7 +1,10 @@
 import {
     pgTable, serial, varchar, timestamp,
-    boolean, integer, unique
+    boolean, integer, unique, check
 } from "drizzle-orm/pg-core";
+import {
+    sql
+} from "drizzle-orm";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const SESSION_LIFETIME = Number(process.env.SESSION_LIFETIME_DAYS ?? 7) * MS_PER_DAY;
@@ -21,8 +24,16 @@ export const users = pgTable("users", {
 export const rooms = pgTable("rooms", {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", { length: 24 }).unique().notNull(),
-    is_restricted: boolean("is_restricted").default(false).notNull()
-});
+    is_restricted: boolean("is_restricted").default(false).notNull(),
+    occupancy: integer("occupancy").default(15).notNull(),
+}, (table) => [
+    // enforce size restriction
+    check(
+        "capacity_range",
+        sql`${table.occupancy} >= 15 AND ${table.occupancy} <= 75`
+    ),
+]);
+
 // one room can have many adjacent rooms
 export const room_adjacency = pgTable("room_adjacency", {
     id: serial("id").primaryKey(),

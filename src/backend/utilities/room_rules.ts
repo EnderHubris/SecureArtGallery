@@ -8,24 +8,52 @@ import { FindUserByID, FindUserBySession } from "./user_rules";
 export type RoomData = {
     id: number,
     name: string,
-    is_restricted: boolean
+    is_restricted: boolean,
+    occupancy: number,
 }
 
 export const lobbyRoom: RoomData = {
     id: 1,
     name: "Lobby",
-    is_restricted: false
+    is_restricted: false,
+    occupancy: 15
 }
 
 export async function GetAllRooms(): Promise<{
     success: boolean,
-    rooms: RoomData[]
+    rooms: RoomData[],
+    counts: number[],
+    users: Array<{
+        uid: number;
+        username: string;
+        email: string
+    }[]>
 }> {
     try {
-        const rooms = await db.select().from(schema.rooms);
-        return { success: true, rooms: rooms };
+        const rooms: RoomData[] = await db.select().from(schema.rooms);
+
+        let counts: number[] = [];
+        let users: Array<{
+            uid: number;
+            username: string;
+            email: string
+        }[]> = [];
+
+        for (const room of rooms) {
+            // fetch the current user count for each room
+            counts.push(
+                await GetRoomCount(room)
+            );
+
+            // fetch all users that are in each room
+            users.push(
+                await GetUsersInRoom(room)
+            )
+        }
+
+        return { success: true, rooms: rooms, counts: counts, users: users };
     } catch {
-        return { success: false, rooms: [] };
+        return { success: false, rooms: [], counts: [], users: [] };
     }
 }
 
@@ -92,6 +120,55 @@ export async function FindAdjacentRooms(id: number): Promise<{ id: number; name:
     }
 }
 
+/**
+ * 
+ * @param room 
+ * @returns number of users currently in a given room
+ */
+export async function GetRoomCount(room: RoomData) {
+    try {
+        const users = await db.select({
+            id: schema.sessions.uid
+        }).from(schema.sessions)
+        .where(eq(
+            schema.sessions.room_id,
+            room.id
+        ));
+
+        return users.length;
+    } catch {
+        return -1;
+    }
+}
+
+export async function GetUsersInRoom(room: RoomData)
+: Promise<{
+    uid: number;
+    username: string;
+    email: string }[]
+> {
+    try {
+        return await db.selectDistinct({
+            uid: schema.users.id,
+            username: schema.users.username,
+            email: schema.users.email,
+        }).from(schema.sessions)
+            .innerJoin(schema.users, eq(schema.sessions.uid, schema.users.id))
+            .where(eq(schema.sessions.room_id, room.id));
+    } catch {
+        return [];
+    }
+}
+
+async function IsRoomFull(room: RoomData) {
+    try {
+        return (await GetRoomCount(room) >= room.occupancy)
+    } catch {
+        // assume full
+        return { success: false, message: "Room may be full!" }
+    }
+}
+
 export async function EnterRoom(token: string, dest_id: number): Promise<{ success: boolean, message: string }> {
     try {
         // check if from the session this move is legal
@@ -138,6 +215,14 @@ export async function EnterRoom(token: string, dest_id: number): Promise<{ succe
             return {
                 success: false,
                 message: "Cannot enter a Restricted Area!"
+            }
+        }
+
+        // check if the room is too full
+        if (await IsRoomFull(dest_room)) {
+            return {
+                success: false,
+                message: "Room is full!"
             }
         }
 
