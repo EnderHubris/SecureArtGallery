@@ -1,6 +1,6 @@
 {
-  "id": "0a41530e-926d-44b4-b4f9-a32b5f739210",
-  "prevId": "76c8584d-d8e2-4546-b6bf-e738eed120a6",
+  "id": "5b8c2603-c5bf-447b-9dd3-3dfee07dd0ef",
+  "prevId": "9e6476e4-d936-47a1-89d3-9b9e5213dfd6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -16,25 +16,25 @@
         },
         "uid": {
           "name": "uid",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "src_room_id": {
           "name": "src_room_id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "dst_room_id": {
           "name": "dst_room_id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "sid": {
           "name": "sid",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -83,7 +83,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "access_logs_dst_room_id_rooms_id_fk": {
@@ -96,7 +96,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "access_logs_sid_sessions_id_fk": {
@@ -134,6 +134,60 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.gallery_images": {
+      "name": "gallery_images",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "image": {
+          "name": "image",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "gallery_images_room_id_rooms_id_fk": {
+          "name": "gallery_images_room_id_rooms_id_fk",
+          "tableFrom": "gallery_images",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "gallery_images_image_room_id_unique": {
+          "name": "gallery_images_image_room_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "image",
+            "room_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.room_adjacency": {
       "name": "room_adjacency",
       "schema": "",
@@ -144,15 +198,34 @@
           "primaryKey": true,
           "notNull": true
         },
+        "room_id": {
+          "name": "room_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "adj_id": {
           "name": "adj_id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
+        "room_adjacency_room_id_rooms_id_fk": {
+          "name": "room_adjacency_room_id_rooms_id_fk",
+          "tableFrom": "room_adjacency",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "room_adjacency_adj_id_rooms_id_fk": {
           "name": "room_adjacency_adj_id_rooms_id_fk",
           "tableFrom": "room_adjacency",
@@ -163,7 +236,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -179,9 +252,20 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "rooms_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "name": {
           "name": "name",
@@ -225,13 +309,19 @@
         },
         "uid": {
           "name": "uid",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "token": {
           "name": "token",
           "type": "varchar(314)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -261,7 +351,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sessions_room_id_rooms_id_fk": {
+          "name": "sessions_room_id_rooms_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -312,6 +415,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'guest'"
+        },
+        "sudo": {
+          "name": "sudo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

@@ -7,6 +7,10 @@ import * as schema from "../../../database/schema";
 import { CheckPassword, UploadImage } from "./general";
 import { ClearSessions, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
 
+import path from "node:path";
+export const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+console.log("[!] Profile Image Upload Directory:", UPLOAD_DIR);
+
 export async function FindUserByID(uid: string):
 Promise<
     {
@@ -126,7 +130,8 @@ async function CreateSession(jwt: string, uid: string) {
     try {
         await db.insert(schema.sessions).values({
             uid: uid,
-            token: jwt
+            token: jwt,
+            room_id: 1, // LOBBY ID
         });
         return true;
     } catch (e) {
@@ -214,7 +219,7 @@ export async function Register(
         }
 
         // if an image was provided upload and handle it
-        const img_str = await UploadImage(image);
+        const img_str = await UploadImage(image, UPLOAD_DIR);
 
         // create a new user entry
         await db.insert(schema.users).values({
@@ -291,7 +296,7 @@ export async function UpdateProfile(
             n_values.password_hash = n_password_hash;
 
         if (image) {
-            const img_str = await UploadImage(image);
+            const img_str = await UploadImage(image, UPLOAD_DIR);
             n_values.image = img_str;
         }
 

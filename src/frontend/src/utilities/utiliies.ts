@@ -36,3 +36,36 @@ export async function VerifyLogin(): Promise<boolean> {
         return false;
     }
 }
+
+/**
+ * Finds the current room a user is in through their JWT session
+ * 
+ * @param room_id 
+ * @returns 
+ */
+export async function GetRoomInfo(): Promise<{
+    room: {
+        id: number,
+        name: string,
+        is_restricted: boolean
+    },
+    adjacent: { id: number, name: string }[]
+}> {
+    try {
+        const endpoint = GetBackendStr("/get_room");
+        const response = await fetch(endpoint, {
+            credentials: "include",
+        });
+        const result = await response.json();
+        return result;
+    } catch {
+        return {
+            room: {
+                id: 1,
+                name: "Lobby",
+                is_restricted: false
+            },
+            adjacent: []
+        }
+    }
+}

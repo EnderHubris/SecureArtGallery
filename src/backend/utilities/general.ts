@@ -1,6 +1,6 @@
 import { db } from "../db";
 import {
-    eq, or
+    eq, or, sql
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
 
@@ -9,6 +9,7 @@ import path from "node:path";
 
 // component shared by server and some routes
 import multer from "multer";
+import { CheckSession } from "./session_utils";
 export const uploadMulter = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -16,8 +17,21 @@ export const uploadMulter = multer({
     },
 });
 
-export const UPLOAD_DIR = path.join(process.cwd(), "uploads");
-console.log("[!] Upload Directory:", UPLOAD_DIR);
+export async function TestSession(jwt: string, res) {
+    const token_valid = await CheckSession(jwt);
+    
+    if (!token_valid) {
+        res.clearCookie("token", {
+            httpOnly: true, // prevent cookie stealing
+            secure: process.env.PROD === "production",
+            sameSite: "lax",
+            path: "/",
+        });
+        
+        return false;
+    }
+    return true
+}
 
 const validTypes = ["image/png", "image/jpeg"];
 const validExtensions = ["png", "jpg", "jpeg"];
@@ -48,7 +62,7 @@ function str2md5(value: string): string {
  * @param name 
  * @returns successful|failed write
  */
-async function writeFile(file: Express.Multer.File, name: string): Promise<boolean> {
+async function writeFile(file: Express.Multer.File, name: string, UPLOAD_DIR: string): Promise<boolean> {
     try {
         await mkdir(UPLOAD_DIR, { recursive: true });
         const filePath = path.join(UPLOAD_DIR, name);
@@ -62,7 +76,7 @@ async function writeFile(file: Express.Multer.File, name: string): Promise<boole
     }
 }
 
-export async function UploadImage(image: Express.Multer.File|undefined|null) {
+export async function UploadImage(image: Express.Multer.File|undefined|null, UPLOAD_DIR: string) {
     if (!image) return "guest.png"
 
     // convert name into md5 and preserve ext (png, jpg)
@@ -75,7 +89,7 @@ export async function UploadImage(image: Express.Multer.File|undefined|null) {
         return "guest.png"
 
     // upload file to uploads directory
-    if (!await writeFile(image, n_file_name))
+    if (!await writeFile(image, n_file_name, UPLOAD_DIR))
         return "guest.png"
         
     return n_file_name;
@@ -105,5 +119,57 @@ export async function CheckPassword(uid: string, password_hash: string) {
     } catch (e: any) {
         console.error(`[CHECK-PASSWD ${new Date().toDateString()}]`, e)
         return false;
+    }
+}
+
+export async function GetAllUsers(page: number) {
+    // keep page positive
+    if (page < 1) page = 1;
+
+    try {
+        const users = await db.select({
+            id: schema.users.id,
+            username: schema.users.username,
+            email: schema.users.email,
+            role: schema.users.role,
+            image: schema.users.image,
+            sudo: schema.users.sudo,
+        }).from(schema.users)
+        .orderBy(
+            sql`CASE
+                WHEN ${schema.users.role} = 'guest' THEN 0
+                WHEN ${schema.users.role} = 'employee' THEN 1
+                WHEN ${schema.users.role} = 'admin' THEN 2
+                ELSE 99
+            END`
+        ).limit(16).offset(16 * (page-1));
+
+        return { success: true, users: users }
+    } catch (e) {
+        console.error(`[GET-ALL-USERS ${new Date().toDateString()}]`, e);
+        return { success: false, users: [] }
+    }
+}
+
+export async function GetAllGalleryImages(page: number): Promise<{
+    success: boolean, 
+    content: {
+        id: string,
+        image: string,
+        room_id: number
+    }[]
+}> {
+    // keep page positive
+    if (page < 1) page = 1;
+
+    try {
+        const content = await db.select()
+            .from(schema.galleryImages)
+            .limit(16).offset(16 * (page-1));
+
+        return { success: true, content: content }
+    } catch (e) {
+        console.error(`[GET-ALL-CONTENT ${new Date().toDateString()}]`, e);
+        return { success: false, content: [] }
     }
 }

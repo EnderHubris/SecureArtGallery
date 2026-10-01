@@ -1,1 +1,0 @@
-ALTER TABLE "users" ADD COLUMN "image" varchar(42) DEFAULT 'guest.png' NOT NULL;

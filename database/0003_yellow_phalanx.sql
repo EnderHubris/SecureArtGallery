@@ -1,1 +1,0 @@
-ALTER TABLE "users" ADD COLUMN "sudo" boolean DEFAULT false NOT NULL;

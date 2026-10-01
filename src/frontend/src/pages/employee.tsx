@@ -5,7 +5,6 @@ import { VerifyLogin } from "../utilities/utiliies";
 import Feedback from '../components/feedback';
 
 import Manage from "../components/ManageGallery"
-import CreateEmployee from "../components/admin/CreateEmployee";
 import Users from "../components/Users";
 import ViewLogs from "../components/ViewLogs";
 
@@ -24,7 +23,7 @@ export default function AdminPanel({ user } : { user: UserData }) {
     
     useEffect(() => {
         const logic = async () => {
-            const isValid = (await VerifyLogin() && user.role === "admin");
+            const isValid = (await VerifyLogin() && user.role === "employee");
             SetRender(isValid);
             if (isValid) return;
             window.location.href = "/login";
@@ -33,12 +32,12 @@ export default function AdminPanel({ user } : { user: UserData }) {
     }, []);
 
     function toTab(value: string): Tab {
-        if (value === "manage" || value === "create" || value === "users" || value === "logs") {
+        if (value === "manage" || value === "users" || value === "logs") {
             return value;
         }
-        return "create";
+        return "manage";
     }
-    const [activeTab, SetActiveTab] = useState<Tab>(toTab(searchParams.get("tab") ?? "create"));
+    const [activeTab, SetActiveTab] = useState<Tab>(toTab(searchParams.get("tab") ?? "manage"));
 
     // shared between all components/views of this panel
     const [success, SetSuccess] = useState(false);
@@ -54,10 +53,10 @@ export default function AdminPanel({ user } : { user: UserData }) {
         <div className="container py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1>Admin Panel</h1>
-                    <p className="text-muted mb-0"> Manage gallery, employees, users, and logs. </p>
+                    <h1>Employee Panel</h1>
+                    <p className="text-muted mb-0"> Manage gallery and view users and system logs </p>
                 </div>
-                <span className="badge bg-danger"> Administrator </span>
+                <span className="badge bg-warning"> Employee </span>
             </div>
             
             <Feedback success={success} message={msg} />
@@ -70,14 +69,6 @@ export default function AdminPanel({ user } : { user: UserData }) {
                         onClick={() => { SetActiveTab("manage"); setTab("manage"); }}
                     >
                         Manage Gallary
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button
-                        className={`nav-link ${ activeTab === "create" ? "active" : "" }`}
-                        onClick={() => { SetActiveTab("create"); setTab("create"); }}
-                    >
-                        Create Employee
                     </button>
                 </li>
                 <li className="nav-item">
@@ -101,8 +92,6 @@ export default function AdminPanel({ user } : { user: UserData }) {
             {/* View */}
             {activeTab === "manage" && ( 
                 <Manage user={user} feedback={feedback} />
-            )} {activeTab === "create" && ( 
-                <CreateEmployee feedback={feedback} />
             )} {activeTab === "users" && (
                 <Users user={user} feedback={feedback} />
             )} {activeTab === "logs" && (

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { GetBackendStr } from "../../utilities/utiliies";
+import { GetBackendStr } from "../utilities/utiliies";
 
 import UserCard from './UserCard';
-import type { UserData } from "../m_types";
+import type { UserData } from "./m_types";
 
 type Props = {
     user: UserData,
@@ -21,7 +21,7 @@ export default function UserManagement({ user, feedback }: Props) {
         try {
             const page = searchParams.get("page");
 
-            const endpoint = GetBackendStr("/admin/get_users");
+            const endpoint = GetBackendStr(`/${user.role}/get_users`);
             const response = await fetch(endpoint ,{
                 method: "POST",
                 credentials: "include",
@@ -33,6 +33,8 @@ export default function UserManagement({ user, feedback }: Props) {
                 }),
             });
             const result = await response.json();
+
+            console.log(result);
 
             SetUsers(result.users ?? []);
 
@@ -78,7 +80,13 @@ export default function UserManagement({ user, feedback }: Props) {
 
             <div className="row g-3">
                 {users.map((currentUser) => (
-                    <UserCard self={user} user={currentUser} feedback={feedback} LoadUsers={LoadUsers} />
+                    <UserCard
+                        key={currentUser.id} /* consumed by React and helps it decern each instantiated card */
+                        self={user}
+                        user={currentUser}
+                        feedback={feedback}
+                        LoadUsers={LoadUsers}
+                    />
                 ))}
             </div>
 

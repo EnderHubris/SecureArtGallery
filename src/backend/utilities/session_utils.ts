@@ -13,6 +13,22 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!")
 
+export async function DecodeToken(token: string): Promise<{
+    uid: string,
+    alt: string,
+    role: string
+}|null|undefined>{
+    try {
+        const payload = jwt.verify(
+            token,
+            JWT_SECRET
+        );
+        return payload;
+    } catch {
+        return undefined;
+    }
+}
+
 async function IsExpired(token: string) {
     try {
         const [session] = await db.select({
@@ -115,5 +131,32 @@ export async function ClearSessions(uid: string) {
     } catch (e) {
         console.error(`[CLEAR-SESSIONS ${new Date().toDateString()}]`, e)
         return false;
+    }
+}
+
+/**
+ * Fetch session information from a given JWT
+ * 
+ * @param token 
+ * @returns 
+ */
+export async function GetSession(token: string): Promise<{
+    id: number,
+    uid: number,
+    token: string,
+    room_id: number
+}|null|undefined> {
+    try {
+        const [session] = await db.select({
+            id: schema.sessions.id,
+            uid: schema.sessions.uid,
+            token: schema.sessions.token,
+            room_id: schema.sessions.room_id,
+        }).from(schema.sessions)
+            .where(eq(schema.sessions.token, token))
+            .limit(1);
+        return session;
+    } catch {
+        return undefined
     }
 }

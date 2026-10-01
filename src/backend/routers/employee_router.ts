@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ChangeRole, CreateNewEmployee, DeleteUser } from "../utilities/admin_rules";
 import { AccessCheck } from "../utilities/session_utils";
 import { GetAllGalleryImages, GetAllUsers, uploadMulter } from "../utilities/general";
 import { GetAllRooms } from "../utilities/room_rules";
@@ -16,62 +15,24 @@ const router = Router();
  * @param next 
  * @returns 
  */
-const requireAdmin = (
+const requireEmployee = (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
     const jwt = req.cookies.token;
-    if (!jwt || jwt.length === 0 || !AccessCheck(jwt, "admin"))
+    if (!jwt || jwt.length === 0 || !AccessCheck(jwt, "employee"))
         return res.status(401).json({ success: false, message: "Access Denied" });
     next();
 };
-router.use(requireAdmin);
+router.use(requireEmployee);
 
 // expands end-point root '/admin'
 router.post("/get_users", async (req, res) => {
     try {
         const { page } = req.body;
-        console.log("[!] Admin Fetching Users");
+        console.log("[!] Employee Fetching Users");
         return res.json(await GetAllUsers(Number(page ?? 1)));
-    } catch (e) {
-        return res.status(500).send("Server Error");
-    }
-});
-
-router.post("/delete_user", async (req, res) => {
-    try {
-        const jwt = req.cookies.token;
-        const { uid } = req.body;
-        
-        console.log(`[DELETE-USER ${new Date().toDateString()}]`);
-
-        return res.json(await DeleteUser(jwt, uid));
-    } catch (e) {
-        return res.status(500).send("Server Error");
-    }
-});
-
-router.post("/set_role", async (req, res) => {
-    try {
-        const jwt = req.cookies.token;
-        const { uid, role } = req.body;
-        
-        console.log(`[SET-ROLE ${new Date().toDateString()}]`);
-
-        return res.json(await ChangeRole(jwt, uid, role));
-    } catch (e) {
-        return res.status(500).send("Server Error");
-    }
-});
-
-router.post("/create_user", async (req, res) => {
-    try {
-        const { username, email, password_hash, role } = req.body;
-        
-        console.log(`[CREATE-USER ${new Date().toDateString()}]`);
-
-        return res.json(await CreateNewEmployee(username, email, password_hash, role));
     } catch (e) {
         return res.status(500).send("Server Error");
     }
@@ -79,7 +40,7 @@ router.post("/create_user", async (req, res) => {
 
 router.get("/get_rooms", async (req, res) => {
     try {
-        console.log("[!] Admin Fetching Rooms");
+        console.log("[!] Employee Fetching Rooms");
         return res.json(await GetAllRooms());
     } catch (e) {
         return res.status(500).send("Server Error");
@@ -89,7 +50,7 @@ router.get("/get_rooms", async (req, res) => {
 router.post("/get_content", async (req, res) => {
     try {
         const { page } = req.body;
-        console.log("[!] Admin Fetching Gallery Content");
+        console.log("[!] Employee Fetching Gallery Content");
         return res.json(await GetAllGalleryImages(Number(page ?? 1)));
     } catch (e) {
         return res.status(500).send("Server Error");

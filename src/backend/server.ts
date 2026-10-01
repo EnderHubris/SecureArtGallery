@@ -3,8 +3,10 @@ import express from "express";
 import cors from 'cors';
 import path from "node:path";
 
-import { DeleteSession, FindUserBySession, Login, Register } from "./utilities/user_rules";
-import { UPLOAD_DIR, uploadMulter } from "./utilities/general";
+import { DeleteSession, FindUserBySession, Login, Register, UPLOAD_DIR as PFP_DIR } from "./utilities/user_rules";
+import { UPLOAD_DIR as GALLERY_DIR, GetImagesByRoom, ImageInRoom } from "./utilities/gallery_rules";
+
+import { TestSession, uploadMulter } from "./utilities/general";
 
 const app = express();
 const port = 8888;
@@ -40,14 +42,18 @@ app.disable('x-powered-by');
 // separate files to reduce clustering multiple
 // endpoints into a single file
 import userRoutes from "./routers/user_router";
-import { CheckSession, SESSION_LIFETIME } from "./utilities/session_utils";
+import { CheckSession, GetSession, SESSION_LIFETIME } from "./utilities/session_utils";
 app.use("/user", userRoutes);
 
 import adminRoutes from "./routers/admin_router";
+import { EnterRoom, FindAdjacentRooms, FindRoomFromToken, lobbyRoom } from "./utilities/room_rules";
 app.use("/admin", adminRoutes);
 
+import employeeRoutes from "./routers/employee_router";
+app.use("/employee", employeeRoutes);
+
 app.get("/", async (req, res) => {
-    res.send("Hello World!");
+    return res.send("Hello World!");
 });
 
 app.post("/login", async (req, res) => {
@@ -67,7 +73,7 @@ app.post("/login", async (req, res) => {
         return res.json(data);
     } catch (e) {
         console.error(`[LOGIN ${new Date().toDateString()}]`, e);
-        res.status(500).send("Server Error");
+        return res.status(500).send("Server Error");
     }
 });
 
@@ -82,7 +88,7 @@ app.post("/register", uploadMulter.single("pfp"), async (req, res) => {
         return res.json(data);
     } catch (e) {
         console.error(`[REGISTER ${new Date().toDateString()}]`, e);
-        res.status(500).send("Server Error");
+        return res.status(500).send("Server Error");
     }
 });
 
@@ -101,7 +107,7 @@ app.post("/logout", async (req, res) => {
         return res.json({ "success": true });
     } catch (e) {
         console.error(`[LOGOUT ${new Date().toDateString()}]`, e);
-        res.status(500).json({ "success": false });
+        return res.status(500).json({ "success": false });
     }
 });
 
@@ -118,7 +124,7 @@ app.post("/info", async (req, res) => {
         });
     } catch (e) {
         console.error(`[INFO ${new Date().toDateString()}]`, e);
-        res.status(500).send("Server Error");
+        return res.status(500).send("Server Error");
     }
 });
 
@@ -127,37 +133,146 @@ app.post("/verify", async (req, res) => {
         const jwt = req.cookies.token;
         if (!jwt) return res.json({ "success": false });
 
-        const token_valid = await CheckSession(jwt);
+        return res.json({ "success": await TestSession(jwt, res) });
+    } catch (e) {
+        return res.status(500).send("Server Error");
+    }
+});
 
-        if (!token_valid) {
-            res.clearCookie("token", {
-                httpOnly: true, // prevent cookie stealing
-                secure: process.env.PROD === "production",
-                sameSite: "lax",
-                path: "/",
+app.get("/get_room", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        if (!jwt)
+            return res.json({
+                room: lobbyRoom,
+                adjacent: []
+            });
+
+        if (!await TestSession(jwt, res)) {
+            return res.json({
+                room: lobbyRoom,
+                adjacent: []
             });
         }
 
-        return res.json({ "success": token_valid });
+        // only those with tokens can get adjacent rooms
+        const currRoom = await FindRoomFromToken(jwt);
+        return res.json({
+            room: currRoom,
+            adjacent: await FindAdjacentRooms(currRoom.id)
+        });
     } catch (e) {
-        res.status(500).send("Server Error");
+        return res.status(500).send("Server Error");
+    }
+});
+
+app.post("/enter_room", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        const { id } = req.body;
+
+        if (!jwt || !id)
+            return {
+                success: false,
+                message: "Could not enter at this time!"
+            }
+
+        if (!await TestSession(jwt, res)) {
+            return {
+                success: id === 1,
+                message: (id === 1) ? "Welcome to the Lobby!" : "Could not enter at this time!"
+            }
+        }
+
+        return res.json(await EnterRoom(jwt, id));
+    } catch (e) {
+        return res.status(500).send("Server Error");
     }
 });
 
 app.get("/image/:file", async (req, res) => {
-    const { file } = req.params;
-    const filePath = path.resolve(path.join(UPLOAD_DIR, path.normalize(file)));
-
-    console.log("[*] User Attempting to access:", filePath);
-    if (!filePath.startsWith(UPLOAD_DIR))
-        return res.status(404).send("Invalid File");
-
-    const f = Bun.file(filePath);
-    if (!(await f.exists())) {
-        return res.status(404).send("File not found");
+    try {
+        const { file } = req.params;
+        const filePath = path.resolve(path.join(PFP_DIR, path.normalize(file)));
+    
+        console.log("[*] User Attempting to access:", filePath);
+        if (!filePath.startsWith(PFP_DIR))
+            return res.status(404).send("Invalid File");
+    
+        const f = Bun.file(filePath);
+        if (!(await f.exists())) {
+            return res.status(404).send("File not found");
+        }
+    
+        return res.sendFile(filePath);
+    } catch {
+        return res.status(500).send("Server Error");
     }
+});
 
-    res.sendFile(filePath);
+app.get("/gallery/:file", async (req, res) => {
+    try {
+        const { file } = req.params;
+        const filePath = path.resolve(path.join(GALLERY_DIR, path.normalize(file)));
+        
+        console.log("[*] User Attempting to access:", filePath);
+        if (!filePath.startsWith(GALLERY_DIR))
+            return res.status(404).send("Invalid File");
+        
+        // check if token is valid
+        const jwt = req.cookies.token;
+        if (jwt && await TestSession(req.cookies.token, res)) {
+            // valid JWT
+            let room_id = 1;
+            const user = await FindUserBySession(jwt);
+
+            if (user && user.role === "guest") {
+                console.warn("[!] Performing Room Check before sending Image...");
+
+                // find the room this guest user is currently in
+                const session = await GetSession(jwt);
+                room_id = session?.room_id ?? 1;
+
+                if (!await ImageInRoom(filePath, room_id)) {
+                    return res.status(403).send("Not viewable in this room");
+                }
+            }
+        } else {
+            // unauthenticated user
+            if (!await ImageInRoom(filePath, 1)) {
+                return res.status(403).send("Not viewable in this room");
+            }
+        }
+
+        const f = Bun.file(filePath);
+        if (!(await f.exists())) {
+            return res.status(404).send("File not found");
+        }
+
+        return res.sendFile(filePath);
+    } catch {
+        return res.status(500).send("Server Error");
+    }
+});
+
+app.get("/room_content", async (req, res) => {
+    try {
+        // use JWT to find the current room
+        const jwt = req.cookies.token;
+        if (!jwt)
+            return res.json(await GetImagesByRoom(1));
+
+        if (!await TestSession(jwt, res)) {
+            return [];
+        }
+
+        const session = await GetSession(jwt);
+        if (!session) return [];
+
+        return res.json(await GetImagesByRoom(session.room_id));
+    } catch {
+        return res.status(500).send("Server Error");
+    }
 });
 
 app.listen(port, () => {

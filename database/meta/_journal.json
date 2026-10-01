@@ -5,36 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1790615870493,
-      "tag": "0000_ancient_zombie",
+      "when": 1790796041409,
+      "tag": "0000_steep_deathstrike",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1790638938282,
-      "tag": "0001_swift_quicksilver",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1790653298887,
-      "tag": "0002_gorgeous_pixie",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1790779063273,
-      "tag": "0003_yellow_phalanx",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1790779456645,
-      "tag": "0004_illegal_sentinels",
+      "when": 1790817009821,
+      "tag": "0001_narrow_night_thrasher",
       "breakpoints": true
     }
   ]

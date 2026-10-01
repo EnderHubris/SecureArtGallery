@@ -1,4 +1,4 @@
-export type Tab = "create" | "users" | "logs";
+export type Tab = "manage" | "create" | "users" | "logs";
 export type UserData = {
     id: string;
     username: string;
@@ -7,3 +7,13 @@ export type UserData = {
     image: string;
     sudo: boolean,
 };
+export type RoomData = {
+    id: number,
+    name: string,
+    is_restricted: boolean
+}
+export type GalleryImage = {
+    id: string,
+    image: string,
+    room_id: number
+}

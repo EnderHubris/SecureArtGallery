@@ -1,6 +1,6 @@
 import {
     pgTable, serial, varchar, timestamp,
-    boolean, integer
+    boolean, integer, unique
 } from "drizzle-orm/pg-core";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -19,13 +19,14 @@ export const users = pgTable("users", {
 });
 
 export const rooms = pgTable("rooms", {
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", { length: 24 }).unique().notNull(),
     is_restricted: boolean("is_restricted").default(false).notNull()
 });
 // one room can have many adjacent rooms
 export const room_adjacency = pgTable("room_adjacency", {
     id: serial("id").primaryKey(),
+    room_id: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
     adj_id: integer("adj_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
 });
 
@@ -33,6 +34,7 @@ export const sessions = pgTable("sessions", {
     id: serial("id").primaryKey(),
     uid: integer("uid").references(() => users.id, { onDelete: "cascade" }).notNull(),
     token: varchar("token", { length: 314 }).notNull(), // JWT
+    room_id: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(), // room this session is actively in
     created_at: timestamp("created_at").defaultNow().notNull(),
     expires_at: timestamp("expires_at").notNull().$defaultFn(() => new Date(Date.now() + SESSION_LIFETIME))
 });
@@ -49,3 +51,11 @@ export const access_logs = pgTable("access_logs", {
     ip_address: varchar("ip_address", { length: 24 }).unique().notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const galleryImages = pgTable("gallery_images", {
+    id: serial("id").primaryKey(),
+    image: varchar("image", { length: 42 }).notNull(),   // user-uploaded file names are MD5 hash strings
+    room_id: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull() // room the image belongs to
+}, (table) => [
+    unique().on(table.image, table.room_id),
+]);

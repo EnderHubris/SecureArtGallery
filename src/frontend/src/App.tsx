@@ -10,6 +10,7 @@ import Login from './pages/login.tsx'
 import Register from './pages/register.tsx'
 import Profile from './pages/profile.tsx'
 import AdminPanel from './pages/admin.tsx'
+import EmployeePanel from './pages/employee.tsx'
 
 // import styling
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -22,7 +23,8 @@ const defaultUser = {
     username: "guest",
     email: "",
     role: "guest",
-    image: "guest.png"
+    image: "guest.png",
+    sudo: false,
 }
 
 function App() {
@@ -63,6 +65,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/admin" element={<AdminPanel user={user} />} />
+                        <Route path="/employee" element={<EmployeePanel user={user} />} />
                         <Route path="/login" element={<Login afterLogin={getUserInfo} />} />
                         <Route path="/profile" element={<Profile user={user} />} />
                         <Route path="/register" element={<Register />} />

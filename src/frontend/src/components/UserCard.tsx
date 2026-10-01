@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { GetBackendStr } from "../../utilities/utiliies";
-import { ChangeRole, DeleteUser } from "../../utilities/admin_utils";
-import type { UserData } from "../m_types";
+import { GetBackendStr } from "../utilities/utiliies";
+import { ChangeRole, DeleteUser } from "../utilities/admin_utils";
+import type { UserData } from "./m_types";
 
 type Props = {
     self: UserData,
@@ -12,6 +12,7 @@ type Props = {
 
 export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
     const [role, SetRole] = useState(user.role);
+    const canEdit: boolean = (self.role === "admin" && (self.id !== user.id));
 
     async function handleDelete(uid: string) {
         if (!window.confirm("Are you sure you want to delete this user?"))
@@ -73,41 +74,41 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
 
                     <div className="d-flex gap-2">
                         <span
-                            className={`${self.id !== user.id ? "roleOption" : ""} badge ${
+                            className={`${canEdit ? "roleOption" : ""} badge ${
                                 role === "guest"
                                     ? "bg-primary"
                                     : "bg-secondary"
                             }`}
-                            onClick={() => SetRole("guest")}
+                            onClick={() => { if (canEdit) SetRole("guest") }}
                         >
                             guest
                         </span>
 
                         <span
-                            className={`${self.id !== user.id ? "roleOption" : ""} badge ${
+                            className={`${canEdit ? "roleOption" : ""} badge ${
                                 role === "employee"
                                     ? "bg-warning"
                                     : "bg-secondary"
                             }`}
-                            onClick={() => SetRole("employee")}
+                            onClick={() => { if (canEdit) SetRole("employee") }}
                         >
                             employee
                         </span>
 
                         <span
-                            className={`${self.id !== user.id ? "roleOption" : ""} badge ${
+                            className={`${canEdit ? "roleOption" : ""} badge ${
                                 role === "admin"
                                     ? "bg-danger"
                                     : "bg-secondary"
                             }`}
-                            onClick={() => SetRole("admin")}
+                            onClick={() => { if (canEdit) SetRole("admin") }}
                         >
                             admin
                         </span>
                     </div>
 
                     {/* Cannot Self Modify/Delete */}
-                    {user.id !== self.id && (
+                    {canEdit && (user.id !== self.id) && (
                         <div className="d-flex gap-2 mt-3">
                             <button
                                 className="btn btn-sm btn-outline-primary"
