@@ -5,7 +5,7 @@ import {
 import * as schema from "../../../database/schema";
 
 import { CheckPassword, UploadImage } from "./general";
-import { ClearSessions, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
+import { ClearSessions, FindSession, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
 
 import path from "node:path";
 export const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -126,20 +126,6 @@ export async function DeleteSession(jwt: string|undefined|null) {
     }
 }
 
-async function CreateSession(jwt: string, uid: string) {
-    try {
-        await db.insert(schema.sessions).values({
-            uid: uid,
-            token: jwt,
-            room_id: 1, // LOBBY ID
-        });
-        return true;
-    } catch (e) {
-        console.error(`[CREAT-SESS ${new Date().toDateString()}]`, e);
-        return false;
-    }
-}
-
 /**
  * return JWT token returned as a cookie
  * 
@@ -158,25 +144,22 @@ export async function Login(username: string, password_hash: string) {
         }
 
         if (user.password_hash !== password_hash) {
+            console.warn(`[DB-LOGIN ${new Date().toDateString()}] authentication failed as ${username}`);
             return {
                 "success": false,
                 "message":"Incorrect Username or Password",
                 "jwt": ""
             }
         }
+        console.log(`[DB-LOGIN ${new Date().toDateString()}] authentication successful as ${username}`);
 
-        console.log(`[DB-LOGIN ${new Date().toDateString()}] login successful as ${username}`);
-
-        const token = GenerateJWT(user.id, user.role);
-        const sess = await CreateSession(token, user.id);
-        if (!sess){
-            return {
-                "success": false,
-                "message":"Failed to Create Session!",
-                "jwt": ""
-            }
-        }
         
+        // Find session
+        const token = await FindSession(user);
+        if (token.length > 0) {
+            console.log(`[DB-LOGIN ${new Date().toDateString()}] fully loggin in as ${username}`);
+        }
+
         return {
             "success": true,
             "message":"Login Successful!",

@@ -41,6 +41,7 @@ async function IsExpired(token: string) {
 
         // remove expired token
         if (isExpired) {
+            console.warn(`[IS-EXPIRED ${new Date().toDateString()}] - JWT provided is expired!`)
             await db.delete(schema.sessions).where(eq(schema.sessions.token, token));
         }
 
@@ -158,5 +159,71 @@ export async function GetSession(token: string): Promise<{
         return session;
     } catch {
         return undefined
+    }
+}
+
+async function CreateSession(jwt: string, uid: string) {
+    try {
+        await db.insert(schema.sessions).values({
+            uid: uid,
+            token: jwt,
+            room_id: 1, // LOBBY ID
+        });
+        return true;
+    } catch (e) {
+        console.error(`[CREAT-SESS ${new Date().toDateString()}]`, e);
+        return false;
+    }
+}
+
+/**
+ * During login process locates a valid JWT session in the DB
+ * if one is not found a new one is generated, if one is found
+ * check the expiration and handle accordingly
+ * 
+ * @param user user data
+ */
+export async function FindSession(user: {
+    id: string;
+    username: string;
+    password_hash: string;
+    email: string;
+    role: string;
+    image: string;
+    sudo: boolean;
+}): Promise<string> {
+    try {
+        // find session from UID
+        const [session] = await db.select({
+            token: schema.sessions.token
+        }).from(schema.sessions).where(
+            eq(schema.sessions.uid, user.id)
+        );
+
+        const make_session = async (user: {
+            id: string;
+            username: string;
+            password_hash: string;
+            email: string;
+            role: string;
+            image: string;
+            sudo: boolean;
+        }) => {
+            const token = GenerateJWT(user.id, user.role);
+            const n_sess = await CreateSession(token, user.id);
+            return n_sess ? token : "";
+        }
+
+        if (!session) {
+            // no session found
+            return await make_session(user);
+        } else {
+            // existing session found
+            const is_valid = await CheckSession(session.token);
+            return is_valid ? session.token : await make_session(user);
+        }
+
+    } catch (e: any) {
+        return "";
     }
 }
