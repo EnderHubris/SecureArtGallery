@@ -5,6 +5,7 @@ export type UserData = {
     email: string;
     role: string;
     image: string;
+    banned: boolean,
     sudo: boolean,
 };
 export type RoomData = {

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { GetBackendStr } from "../utilities/utiliies";
-import { ChangeRole, DeleteUser } from "../utilities/admin_utils";
+import { BanUser, ChangeRole, DeleteUser, UnbanUser } from "../utilities/admin_utils";
 import type { UserData } from "./m_types";
+import { KickUser } from "../utilities/employee_utils";
 
 type Props = {
     self: UserData,
@@ -15,7 +16,7 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
     const canEdit: boolean = (self.role === "admin" && (self.id !== user.id));
 
     async function handleDelete(uid: string) {
-        if (!window.confirm("Are you sure you want to delete this user?"))
+        if (!window.confirm("Are you sure you want to DELETE this user?"))
             return;
         const result = await DeleteUser(uid);
         feedback(
@@ -23,11 +24,33 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
             result.message
         );
         if (result.success)
-            LoadUsers();
+            setTimeout(() => LoadUsers(), 3200);
+    }
+    async function handleKick(uid: string) {
+        if (!window.confirm("Are you sure you want to KICK this user?"))
+            return;
+        const result = await KickUser(self.role, uid);
+        feedback(
+            result.success,
+            result.message
+        );
+        if (result.success)
+            setTimeout(() => LoadUsers(), 3200);
+    }
+    async function handleBan(ban_status: boolean, uid: string) {
+        if (!window.confirm(`Are you sure you want to ${ ban_status ? "UNBAN" : "BAN" } this user?`))
+            return;
+        const result = ban_status ? await UnbanUser(uid) : await BanUser(uid);
+        feedback(
+            result.success,
+            result.message
+        );
+        if (result.success)
+            setTimeout(() => LoadUsers(), 3200);
     }
 
     async function handleRoleChange(uid: string) {
-        if (!window.confirm("Are you sure you want to change this user's role?"))
+        if (!window.confirm("Are you sure you want to CHANGE this user's ROLE?"))
             return;
         const result = await ChangeRole(uid, role);
         feedback(
@@ -35,7 +58,7 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
             result.message
         );
         if (result.success)
-            LoadUsers();
+            setTimeout(() => LoadUsers(), 3200);
     }
 
     return (
@@ -64,6 +87,12 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
                         <div>
                             <h5 className="mb-0">
                                 {user.username}
+
+                                {user.banned && (
+                                    <span className={"m-2 badge bg-danger"}>
+                                        BANNED
+                                    </span>
+                                )}
                             </h5>
 
                             <small className="text-muted">
@@ -107,24 +136,42 @@ export default function UserCard({ self, user, feedback, LoadUsers }: Props) {
                         </span>
                     </div>
 
-                    {/* Cannot Self Modify/Delete */}
-                    {canEdit && (user.id !== self.id) && (
-                        <div className="d-flex gap-2 mt-3">
-                            <button
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => handleRoleChange(user.id)}
-                            >
-                                Change Role
-                            </button>
+                    <div className="d-flex gap-2 mt-3">
+                        {/* Cannot Self Modify/Delete */}
+                        {canEdit && (user.id !== self.id) && (
+                            <>
+                                <button
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={() => handleRoleChange(user.id)}
+                                >
+                                    Change Role
+                                </button>
 
-                            <button
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => handleDelete(user.id)}
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    )}
+                                <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => handleDelete(user.id)}
+                                >
+                                    Delete
+                                </button>
+                                <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => handleBan(user.banned, user.id)}
+                                >
+                                    {user.banned ? (
+                                        <>Unban</>
+                                    ) : (
+                                        <>Ban</>
+                                    )}
+                                </button>
+                            </>
+                        )}
+                        <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleKick(user.id)}
+                        >
+                            Kick
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

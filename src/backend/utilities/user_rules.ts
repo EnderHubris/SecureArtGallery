@@ -8,30 +8,27 @@ import { CheckPassword, UploadImage } from "./general";
 import { ClearSessions, FindSession, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
 
 import path from "node:path";
+import type { UserData } from "./m_types";
 export const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 console.log("[!] Profile Image Upload Directory:", UPLOAD_DIR);
 
+// reusable user data select payload
+const UserDataSelect = {
+    id: schema.users.id,
+    username: schema.users.username,
+    email: schema.users.email,
+    role: schema.users.role,
+    image: schema.users.image,
+    banned: schema.users.banned,
+    sudo: schema.users.sudo,
+}
+
 export async function FindUserByID(uid: string):
-Promise<
-    {
-        id: string;
-        username: string;
-        email: string;
-        role: string;
-        image: string;
-        sudo: boolean;
-    } | null | undefined
-> {
+Promise< UserData | null | undefined > {
     try {
-        const [user] = await db.select({
-            id: schema.users.id,
-            username: schema.users.username,
-            email: schema.users.email,
-            role: schema.users.role,
-            image: schema.users.image,
-            sudo: schema.users.sudo,
-        }).from(schema.users)
-        .where(eq(schema.users.id, uid)).limit(1);
+        const [user] = await db.select(UserDataSelect)
+            .from(schema.users)
+            .where(eq(schema.users.id, uid)).limit(1);
 
         return user;
     } catch {
@@ -40,16 +37,7 @@ Promise<
 }
 
 export async function FindUserBySession(jwt: string|undefined|null):
-Promise<
-    {
-        id: string;
-        username: string;
-        email: string;
-        role: string;
-        image: string;
-        sudo: boolean;
-    } | null | undefined
-> {
+Promise< UserData | null | undefined > {
     try {
         if (!jwt) return null;
 
@@ -60,15 +48,9 @@ Promise<
         .limit(1);
         if (!sess) return null;
 
-        const [user] = await db.select({
-            id: schema.users.id,
-            username: schema.users.username,
-            email: schema.users.email,
-            role: schema.users.role,
-            image: schema.users.image,
-            sudo: schema.users.sudo,
-        }).from(schema.users)
-        .where(eq(schema.users.id, sess.uid)).limit(1);
+        const [user] = await db.select(UserDataSelect)
+            .from(schema.users)
+            .where(eq(schema.users.id, sess.uid)).limit(1);
 
         return user;
     } catch {
@@ -76,32 +58,39 @@ Promise<
     }
 }
 
+/**
+ * 
+ * @param username 
+ * @param email (can be the same value as username)
+ * @returns User Data Blob containing identifiable information
+ * including **password_hash**
+ */
 export async function FindUser(username: string, email: string = ""):
-Promise<
-    {
-        id: string;
-        username: string;
-        password_hash: string;
-        email: string;
-        role: string;
-        image: string;
-        sudo: boolean;
-    } | null | undefined
-> {
+Promise< {
+    id: string,
+    username: string,
+    email: string,
+    password_hash: string,
+    role: string,
+    image: string,
+    banned: boolean,
+    sudo: boolean,
+} | null | undefined > {
     try {
-        const [user] = await db.select({
+        const [user] = await db.select({ 
             id: schema.users.id,
             username: schema.users.username,
-            password_hash: schema.users.password_hash,
             email: schema.users.email,
+            password_hash: schema.users.password_hash,
             role: schema.users.role,
             image: schema.users.image,
+            banned: schema.users.banned,
             sudo: schema.users.sudo,
         }).from(schema.users)
-        .where(or(
-            eq(schema.users.username, username),
-            eq(schema.users.email, email)
-        )).limit(1);
+            .where(or(
+                eq(schema.users.username, username),
+                eq(schema.users.email, email)
+            )).limit(1);
         return user;
     } catch {
         return null;
@@ -134,6 +123,7 @@ export async function DeleteSession(jwt: string|undefined|null) {
  */
 export async function Login(username: string, password_hash: string) {
     try {
+        // test for existance
         const user = await FindUser(username, username); // username value can also be an email
         if (!user) {
             return {
@@ -143,6 +133,17 @@ export async function Login(username: string, password_hash: string) {
             }
         }
 
+        // check if the user is banned
+        if (user.banned) {
+            console.warn(`[DB-LOGIN ${new Date().toDateString()}] Banned User Login Attempt -> ${username}`);
+            return {
+                "success": false,
+                "message":"Account is Banned!",
+                "jwt": ""
+            }
+        }
+
+        // check password_hash
         if (user.password_hash !== password_hash) {
             console.warn(`[DB-LOGIN ${new Date().toDateString()}] authentication failed as ${username}`);
             return {
@@ -152,9 +153,8 @@ export async function Login(username: string, password_hash: string) {
             }
         }
         console.log(`[DB-LOGIN ${new Date().toDateString()}] authentication successful as ${username}`);
-
         
-        // Find session
+        // Find active session or make a new session
         const token = await FindSession(user);
         if (token.length > 0) {
             console.log(`[DB-LOGIN ${new Date().toDateString()}] fully loggin in as ${username}`);

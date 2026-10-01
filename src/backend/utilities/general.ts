@@ -9,7 +9,10 @@ import path from "node:path";
 
 // component shared by server and some routes
 import multer from "multer";
-import { CheckSession } from "./session_utils";
+import { CheckSession, FindSession } from "./session_utils";
+import { DeleteSession, FindUserByID, FindUserBySession } from "./user_rules";
+import { roleMap } from "./admin_rules";
+import { UserDataSelect, type UserData } from "./m_types";
 export const uploadMulter = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -122,19 +125,15 @@ export async function CheckPassword(uid: string, password_hash: string) {
     }
 }
 
-export async function GetAllUsers(page: number) {
+export async function GetAllUsers(page: number): Promise<{
+    success: boolean,
+    users: UserData[]
+}> {
     // keep page positive
     if (page < 1) page = 1;
 
     try {
-        const users = await db.select({
-            id: schema.users.id,
-            username: schema.users.username,
-            email: schema.users.email,
-            role: schema.users.role,
-            image: schema.users.image,
-            sudo: schema.users.sudo,
-        }).from(schema.users)
+        const users = await db.select(UserDataSelect).from(schema.users)
         .orderBy(
             sql`CASE
                 WHEN ${schema.users.role} = 'guest' THEN 0
@@ -171,5 +170,57 @@ export async function GetAllGalleryImages(page: number): Promise<{
     } catch (e) {
         console.error(`[GET-ALL-CONTENT ${new Date().toDateString()}]`, e);
         return { success: false, content: [] }
+    }
+}
+
+export async function KickUser(token: string, uid: string) {
+    try {
+        // prevent self-deletion
+        const user = await FindUserBySession(token);
+        if (!user)
+            return { success: false, message: "Failed to Kick User!" }
+
+        if (user.id === uid)
+            return { success: false, message: "Cannot Self-Kick!" }
+
+        const delTarget = await FindUserByID(uid);
+        if (!delTarget)
+            return { success: false, message: "Failed to Kick User!" }
+
+        // employee cannot kick admins and admins can kick everyone
+        const a = roleMap[delTarget.role];
+        const b = roleMap[user.role];
+        if (a === undefined || b === undefined) {
+            console.warn("[!] Extracted Undefined Roles:", a, b);
+            return { success: false, message: "Failed to Kick User!" }
+        }
+
+        if (a > b) {
+            return { success: false, message: "Cannot Kick Higher Authority!" }
+        }
+
+        if (delTarget && delTarget.sudo)
+            return { success: false, message: "Cannot Kick Super Admin!" }
+
+        const [delTargetSession] = await db.select({
+            token: schema.sessions.token
+        }).from(schema.sessions)
+        .where(eq(schema.sessions.uid, uid));
+
+        console.log(delTargetSession)
+
+        if (!delTargetSession) {
+            console.warn("[!] Target has no active session!")
+            return { success: false, message: "User may already have been kicked!" }
+        }
+
+        const kicked = await DeleteSession(delTargetSession.token);
+
+        return {
+            success: kicked,
+            message: kicked ? "Kicked User Successfully!" : "Failed to Kick User!"
+        }
+    } catch {
+        return { success: false, message: "Failed to Kick User!" }
     }
 }

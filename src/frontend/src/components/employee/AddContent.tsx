@@ -52,9 +52,8 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
             result.success,
             result.message
         );
-        if (result.success) {
-            LoadContent();
-        }
+        if (result.success)
+            setTimeout(() => LoadContent(), 3200);
     }
 
     return (

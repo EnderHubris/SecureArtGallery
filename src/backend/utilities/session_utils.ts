@@ -10,6 +10,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const SESSION_LIFETIME = Number(process.env.SESSION_LIFETIME_DAYS ?? 7) * MS_PER_DAY;
 
 import jwt from 'jsonwebtoken';
+import type { UserData } from "./m_types";
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!")
 
@@ -182,16 +183,9 @@ async function CreateSession(jwt: string, uid: string) {
  * check the expiration and handle accordingly
  * 
  * @param user user data
+ * @returns JWT token
  */
-export async function FindSession(user: {
-    id: string;
-    username: string;
-    password_hash: string;
-    email: string;
-    role: string;
-    image: string;
-    sudo: boolean;
-}): Promise<string> {
+export async function FindSession(user: UserData): Promise<string> {
     try {
         // find session from UID
         const [session] = await db.select({
@@ -200,15 +194,7 @@ export async function FindSession(user: {
             eq(schema.sessions.uid, user.id)
         );
 
-        const make_session = async (user: {
-            id: string;
-            username: string;
-            password_hash: string;
-            email: string;
-            role: string;
-            image: string;
-            sudo: boolean;
-        }) => {
+        const make_session = async (user: UserData) => {
             const token = GenerateJWT(user.id, user.role);
             const n_sess = await CreateSession(token, user.id);
             return n_sess ? token : "";

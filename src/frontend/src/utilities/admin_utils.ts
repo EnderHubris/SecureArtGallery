@@ -29,6 +29,56 @@ export async function DeleteUser(uid: string): Promise<{
     }
 }
 
+export async function UnbanUser(uid: string): Promise<{
+    success: boolean;
+    message: string;
+}> {
+    if (uid.length === 0)
+        return { success: false, message: "Error Banning User!" }
+
+    try {
+        const endpoint = GetBackendStr("/admin/unban_user");
+        const response = await fetch(endpoint, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "uid": uid
+            }),
+        });
+        return await response.json();
+    } catch {
+        return { success: false, message: "Error Banning User!" }
+    }
+}
+
+export async function BanUser(uid: string): Promise<{
+    success: boolean;
+    message: string;
+}> {
+    if (uid.length === 0)
+        return { success: false, message: "Error Banning User!" }
+
+    try {
+        const endpoint = GetBackendStr("/admin/ban_user");
+        const response = await fetch(endpoint, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "uid": uid
+            }),
+        });
+        return await response.json();
+    } catch {
+        return { success: false, message: "Error Banning User!" }
+    }
+}
+
 export async function ChangeRole(uid: string, role: string): Promise<{
     success: boolean;
     message: string;

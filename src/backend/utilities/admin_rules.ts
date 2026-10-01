@@ -3,9 +3,9 @@ import {
     eq, sql
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
-import { FindUser, FindUserByID, FindUserBySession } from "./user_rules";
+import { DeleteSession, FindUser, FindUserByID, FindUserBySession } from "./user_rules";
 
-const roleMap: Record<string, number> = {
+export const roleMap: Record<string, number> = {
     guest: 0,
     employee: 1,
     admin: 2
@@ -31,6 +31,50 @@ export async function DeleteUser(token:string, uid: string) {
         return { success: true, message: "Deleted User Successfully!" }
     } catch {
         return { success: false, message: "Failed to Delete User!" }
+    }
+}
+
+export async function HandleUserBan(token:string, uid: string, banned: boolean = true) {
+    try {
+        // prevent self-banning
+        const user = await FindUserBySession(token);
+        if (!user)
+            return { success: false, message: `Failed to ${banned ? "Ban" : "Unban"} User!` }
+
+        if (user.id === uid)
+            return { success: false, message: `Cannot Self-${banned ? "Ban" : "Unban"}!` }
+
+        // check for existance
+        const delTarget = await FindUserByID(uid);
+        if (!delTarget)
+            return { success: false, message: `Failed to ${banned ? "Ban" : "Unban"} User!` }
+        
+        // check for super-user
+        if (delTarget && delTarget.sudo)
+            return { success: false, message: `Cannot ${banned ? "Ban" : "Unban"} Super Admin!` }
+
+        // clear session if banned
+        if (banned) {
+            const [session] = await db.select({
+                token: schema.sessions.token
+            }).from(schema.sessions).where(
+                eq(schema.sessions.uid, delTarget.id)
+            );
+            
+            if (session)
+                await DeleteSession(session.token);
+        }
+
+        // flag account as banned
+        await db.update(schema.users)
+            .set({
+                banned: banned,
+            })
+            .where(eq(schema.users.id, uid));
+
+        return { success: true, message: `${banned ? "Banned" : "Unbanned"} User Successfully!` }
+    } catch {
+        return { success: false, message: `Failed to ${banned ? "Ban" : "Unban"} User!` }
     }
 }
 

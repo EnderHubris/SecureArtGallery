@@ -17,6 +17,7 @@ export const users = pgTable("users", {
     password_hash: varchar("password_hash", { length: 64 }).notNull(),    // SHA-256
     role: varchar("role", { length: 10 }).notNull().default("guest"),     // guest, employee, admin
     sudo: boolean("sudo").default(false).notNull(),
+    banned: boolean("banned").default(false).notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull()
 });

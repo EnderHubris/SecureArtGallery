@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { AccessCheck } from "../utilities/session_utils";
-import { GetAllGalleryImages, GetAllUsers, uploadMulter } from "../utilities/general";
+import { GetAllGalleryImages, GetAllUsers, KickUser, uploadMulter } from "../utilities/general";
 import { GetAllRooms } from "../utilities/room_rules";
 import { UploadGalleryImage } from "../utilities/gallery_rules";
 const router = Router();
@@ -77,6 +77,19 @@ router.post("/upload_content", uploadMulter.single("g_img"), async (req, res) =>
     } catch (e) {
         console.error(`[UPLOAD-CONTENT ${new Date().toDateString()}]`, e);
         res.status(500).send("Server Error");
+    }
+});
+
+router.post("/kick_user", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        const { uid } = req.body;
+        
+        console.log(`[KICK-USER ${new Date().toDateString()}]`);
+
+        return res.json(await KickUser(jwt, uid));
+    } catch (e) {
+        return res.status(500).send("Server Error");
     }
 });
 

@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ChangeRole, CreateNewEmployee, DeleteUser } from "../utilities/admin_rules";
+import { ChangeRole, CreateNewEmployee, DeleteUser, HandleUserBan } from "../utilities/admin_rules";
 import { AccessCheck } from "../utilities/session_utils";
-import { GetAllGalleryImages, GetAllUsers, uploadMulter } from "../utilities/general";
+import { GetAllGalleryImages, GetAllUsers, KickUser, uploadMulter } from "../utilities/general";
 import { GetAllRooms } from "../utilities/room_rules";
 import { UploadGalleryImage } from "../utilities/gallery_rules";
 const router = Router();
@@ -47,6 +47,42 @@ router.post("/delete_user", async (req, res) => {
         console.log(`[DELETE-USER ${new Date().toDateString()}]`);
 
         return res.json(await DeleteUser(jwt, uid));
+    } catch (e) {
+        return res.status(500).send("Server Error");
+    }
+});
+router.post("/kick_user", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        const { uid } = req.body;
+        
+        console.log(`[KICK-USER ${new Date().toDateString()}]`);
+
+        return res.json(await KickUser(jwt, uid));
+    } catch (e) {
+        return res.status(500).send("Server Error");
+    }
+});
+router.post("/ban_user", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        const { uid } = req.body;
+        
+        console.log(`[BAN-USER ${new Date().toDateString()}]`);
+
+        return res.json(await HandleUserBan(jwt, uid));
+    } catch (e) {
+        return res.status(500).send("Server Error");
+    }
+});
+router.post("/unban_user", async (req, res) => {
+    try {
+        const jwt = req.cookies.token;
+        const { uid } = req.body;
+        
+        console.log(`[UNBAN-USER ${new Date().toDateString()}]`);
+
+        return res.json(await HandleUserBan(jwt, uid, false));
     } catch (e) {
         return res.status(500).send("Server Error");
     }

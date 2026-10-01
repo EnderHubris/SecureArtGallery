@@ -50,7 +50,7 @@ export default function Room() {
         SetMsg(result.message);
 
         if (result.success) {
-            await FetchRoomData();
+            setTimeout(() => FetchRoomData(), 3200);
         }
 
         // clear feedback after some time
