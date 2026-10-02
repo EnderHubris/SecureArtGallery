@@ -4,6 +4,7 @@ import {
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
 import { DeleteSession, FindUser, FindUserByID, FindUserBySession } from "./user_rules";
+import { str2sha256 } from "./general";
 
 export const roleMap: Record<string, number> = {
     guest: 0,
@@ -80,22 +81,31 @@ export async function HandleUserBan(token:string, uid: string, banned: boolean =
 
 export async function ChangeRole(token: string, uid: string, role: string) {
     try {
+        console.warn("[!] UID:", uid, "subject to role update ->", role);
+
         // ensure role is valid
-        if (!roleMap[role])
-            return { success: false, message: "Error Updating User's Role!" }
+        const role_resolve = roleMap[role];
+        if (role_resolve === undefined)
+            return { success: false, message: "Invalid role value!" }
 
         // prevent self-modification
         const user = await FindUserBySession(token);
         if (!user)
-        return { success: false, message: "Error Updating User's Role!" }
+            return { success: false, message: "Error Updating User's Role!" }
 
         if (user.id === uid)
             return { success: false, message: "Cannot Self-Modify!" }
+
+        const targetUser = await FindUserByID(uid);
+        if (!targetUser)
+            return { success: false, message: "User not Found!" }
 
         await db.update(schema.users).set({
             role: role
         })
         .where(eq(schema.users.id, uid));
+
+        console.log(`[+] ${targetUser.username}'s role changed: ${targetUser.role} -> ${role}`);
 
         return { success: true, message: "Role Updated!" }
     } catch {
@@ -106,14 +116,14 @@ export async function ChangeRole(token: string, uid: string, role: string) {
 export async function CreateNewEmployee(
     username: string,
     email: string,
-    password_hash: string,
+    password: string,
     role: string
 ) {
     try {
         // check for invalid role
-        if (role !== "employee" && role !== "admin") {
-            return { success: false, message: "Error Creating New User!" }
-        }
+        const role_resolve = roleMap[role];
+        if (role_resolve === undefined || role_resolve === 0)
+            return { success: false, message: "Invalid role value!" }
 
         // check if username or email are taken
         const existingUser = await FindUser(username, email);
@@ -124,7 +134,7 @@ export async function CreateNewEmployee(
         await db.insert(schema.users).values({
             username: username,
             email: email,
-            password_hash: password_hash, 
+            password_hash: str2sha256(password), 
             role: role
         });
 

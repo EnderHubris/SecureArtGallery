@@ -2,7 +2,7 @@
  * @description These utilities are browser compatible
  */
 
-import { GetBackendStr, str2sha256 } from "./utiliies";
+import { GetBackendStr } from "./utiliies";
 
 export async function DeleteUser(uid: string): Promise<{
     success: boolean;
@@ -136,7 +136,7 @@ export async function CreateNewEmployee({
             body: JSON.stringify({
                 "username": username,
                 "email": email,
-                "password_hash": await str2sha256(password),
+                "password": password,
                 "role": role,
             }),
         });

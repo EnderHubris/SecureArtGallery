@@ -104,11 +104,11 @@ router.post("/set_role", async (req, res) => {
 
 router.post("/create_user", async (req, res) => {
     try {
-        const { username, email, password_hash, role } = req.body;
+        const { username, email, password, role } = req.body;
         
         console.log(`[CREATE-USER ${new Date().toDateString()}]`);
 
-        return res.json(await CreateNewEmployee(username, email, password_hash, role));
+        return res.json(await CreateNewEmployee(username, email, password, role));
     } catch (e) {
         return res.status(500).send("Server Error");
     }

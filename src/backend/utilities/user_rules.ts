@@ -4,7 +4,7 @@ import {
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
 
-import { CheckPassword, UploadImage } from "./general";
+import { CheckPassword, str2sha256, UploadImage } from "./general";
 import { ClearSessions, FindSession, GenerateJWT, SESSION_LIFETIME } from "./session_utils";
 
 import path from "node:path";
@@ -119,9 +119,9 @@ export async function DeleteSession(jwt: string|undefined|null) {
  * return JWT token returned as a cookie
  * 
  * @param username or email
- * @param password_hash 
+ * @param password 
  */
-export async function Login(username: string, password_hash: string) {
+export async function Login(username: string, password: string) {
     try {
         // test for existance
         const user = await FindUser(username, username); // username value can also be an email
@@ -144,7 +144,7 @@ export async function Login(username: string, password_hash: string) {
         }
 
         // check password_hash
-        if (user.password_hash !== password_hash) {
+        if (user.password_hash !== str2sha256(password)) {
             console.warn(`[DB-LOGIN ${new Date().toDateString()}] authentication failed as ${username}`);
             return {
                 "success": false,
@@ -178,23 +178,13 @@ export async function Login(username: string, password_hash: string) {
 export async function Register(
     username: string,
     email: string,
-    password_hash: string,
+    password: string,
     image: Express.Multer.File|null|undefined
 ) {
     try {
         // check if user already exists
         const user = await FindUser(username, email);
         if (user) {
-            return {
-                "success": false,
-                "message":"User Already Exists!"
-            }
-        }
-
-        // check for malformed password_hash
-        const valid_hash = /^[a-fA-F0-9]{64}$/.test(password_hash);
-        if (!valid_hash) {
-            console.warn(`[!] Invalid hash was sent to server (${new Date().toDateString()})`)
             return {
                 "success": false,
                 "message":"User Already Exists!"
@@ -208,7 +198,7 @@ export async function Register(
         await db.insert(schema.users).values({
             username: username,
             email: email,
-            password_hash: password_hash,
+            password_hash: str2sha256(password),
             image: img_str
         })
 
@@ -222,8 +212,8 @@ export async function Register(
 export async function UpdateProfile(
     username: string,
     email: string,
-    n_password_hash: string,
-    password_hash: string,
+    n_password: string,
+    password: string,
     image: Express.Multer.File|null|undefined,
     jwt: string|null|undefined,
     res: any
@@ -238,7 +228,7 @@ export async function UpdateProfile(
         }
 
         // check if the provided hash matches the current user's
-        if (!await CheckPassword(user.id, password_hash)) {
+        if (!await CheckPassword(user.id, password)) {
             return { "success": false, "message": "Update Failed!" }
         }
 
@@ -246,19 +236,6 @@ export async function UpdateProfile(
         if (username.length > 0 || email.length > 0) {
             const existingUser = await FindUser(username, email);
             if (existingUser) {
-                return {
-                    "success": false,
-                    "message":"Username or Email is taken!"
-                }
-            }
-        }
-
-        // check for malformed password_hash
-        if (n_password_hash.length > 0 && password_hash.length > 0) {
-            const valid_hash = /^[a-fA-F0-9]{64}$/.test(password_hash);
-            const valid_hash2 = /^[a-fA-F0-9]{64}$/.test(n_password_hash);
-            if (!valid_hash || !valid_hash2) {
-                console.warn(`[!] Invalid hash was sent to server (${new Date().toDateString()}) <-- UPDATE-PROFILE`)
                 return {
                     "success": false,
                     "message":"Username or Email is taken!"
@@ -275,8 +252,8 @@ export async function UpdateProfile(
         if (email && email.length > 0)
             n_values.email = email;
 
-        if (n_password_hash && n_password_hash.length > 0)
-            n_values.password_hash = n_password_hash;
+        if (n_password && n_password.length > 0)
+            n_values.password_hash = str2sha256(n_password);
 
         if (image) {
             const img_str = await UploadImage(image, UPLOAD_DIR);
@@ -284,16 +261,12 @@ export async function UpdateProfile(
         }
 
         // clear old session(s) and generate a new one
-        if (n_password_hash && n_password_hash.length > 0) {
+        if (n_password && n_password.length > 0) {
             if (!await ClearSessions(user.id))
                 return { "success": false, "message": "Update Failed!" }
 
             // apply the JWT to the user's session
-            const n_token = GenerateJWT(user.id, user.role);
-            const sess = await CreateSession(n_token, user.id);
-            if (!sess) {
-                return { "success": false, "message": "Update Failed!" }
-            }
+            const n_token = await FindSession(user);
 
             res.cookie("token", n_token, {
                 httpOnly: true, // prevent cookie stealing

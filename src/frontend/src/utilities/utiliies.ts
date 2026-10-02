@@ -5,14 +5,6 @@
 import type { RoomData } from "../components/m_types";
 import { lobbyRoom } from "./room_utils";
 
-// method is specifically made for running in the browser
-export async function str2sha256(value: string): Promise<string> {
-    if (value.length === 0) return "";
-    const data = new TextEncoder().encode(value);
-    const hash = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 /**
  * By default with no explicit definition
  * this is ran in context of nginx where
