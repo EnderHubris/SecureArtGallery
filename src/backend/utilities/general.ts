@@ -6,6 +6,19 @@ import * as schema from "../../../database/schema";
 
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
+
+export function str2sha256(value: string) {
+    return createHash("sha256")
+        .update(value)
+        .digest("hex");
+}
+function str2md5(value: string): string {
+    const hasher = new Bun.CryptoHasher("md5");
+    hasher.update(value);
+
+    return hasher.digest("hex");
+}
 
 // component shared by server and some routes
 import multer from "multer";
@@ -50,13 +63,6 @@ function getExtension(filename: string): string {
     return filename.slice(lastDot + 1);
 }
 
-function str2md5(value: string): string {
-    const hasher = new Bun.CryptoHasher("md5");
-    hasher.update(value);
-
-    return hasher.digest("hex");
-}
-
 /**
  * Takes a given file and a desired save-as name
  * and writes the file onto disk in the uploads dir
@@ -99,17 +105,16 @@ export async function UploadImage(image: Express.Multer.File|undefined|null, UPL
 }
 
 /**
- * Check if a provided password hash matches
+ * Check if a provided password matches
  * to the user with a given UID
  * 
  * @param uid 
- * @param password_hash 
+ * @param password
  * @returns 
  */
-export async function CheckPassword(uid: string, password_hash: string) {
-    const valid_hash = /^[a-fA-F0-9]{64}$/.test(password_hash)
-    if (uid.length === 0 || password_hash.length === 0) return false;
-    if (!valid_hash) return false;
+export async function CheckPassword(uid: string, password: string) {
+    if (uid.length === 0 || password.length === 0) return false;
+    const password_hash = str2sha256(password);
 
     try {
         const [user] = await db.select({

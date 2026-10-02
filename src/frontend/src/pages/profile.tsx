@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { VerifyLogin, GetBackendStr, str2sha256 } from "../utilities/utiliies";
+import { VerifyLogin, GetBackendStr } from "../utilities/utiliies";
 
 import Feedback from '../components/feedback';
 import type { UserData } from "../components/m_types";
@@ -42,8 +42,8 @@ export default function Profile({ user } : { user: UserData }) {
             const formData = new FormData();
             formData.append("username", n_username);
             formData.append("email", n_email);
-            formData.append("n_password_hash", await str2sha256(n_password));
-            formData.append("password_hash", await str2sha256(password));
+            formData.append("n_password", n_password);
+            formData.append("password", password);
             if (n_image) {
                 formData.append("pfp", n_image);
             }

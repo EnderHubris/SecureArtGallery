@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { str2sha256, GetBackendStr } from '../utilities/utiliies';
+import { GetBackendStr } from '../utilities/utiliies';
 
 import Feedback from '../components/feedback';
 
@@ -23,7 +23,7 @@ export default function Login({ afterLogin } : { afterLogin: () => void }) {
                 },
                 body: JSON.stringify({
                     "username": username,
-                    "password_hash": await str2sha256(password),
+                    "password": password,
                 }),
             });
     

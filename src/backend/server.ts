@@ -17,6 +17,7 @@ const allowedOrigins = new Set(
         .map((s) => s.trim())
         .filter(Boolean),
 );
+console.log("[*] CORS allowed origins:", allowedOrigins);
 
 const defaultUser = {
     id: "0",
@@ -62,9 +63,9 @@ app.get("/", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     try {
-        const { username, password_hash } = req.body;
+        const { username, password } = req.body;
 
-        const data = await Login(username, password_hash);
+        const data = await Login(username, password);
 
         // apply the JWT to the user's session
         res.cookie("token", data.jwt, {
@@ -83,12 +84,12 @@ app.post("/login", async (req, res) => {
 
 app.post("/register", uploadMulter.single("pfp"), async (req, res) => {
     try {
-        const { username, email, password_hash } = req.body;
+        const { username, email, password } = req.body;
         const image = req.file;
         
         console.log(`[REGISTER ${new Date().toDateString()}] Trying to register user: ${username}`);
         
-        const data = await Register(username, email, password_hash, image);
+        const data = await Register(username, email, password, image);
         return res.json(data);
     } catch (e) {
         console.error(`[REGISTER ${new Date().toDateString()}]`, e);

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { GetBackendStr, str2sha256 } from "../utilities/utiliies";
+import { GetBackendStr } from "../utilities/utiliies";
 
 import Feedback from '../components/feedback';
 
@@ -27,7 +27,7 @@ export default function Register() {
             const formData = new FormData();
             formData.append("username", username);
             formData.append("email", email);
-            formData.append("password_hash", await str2sha256(password));
+            formData.append("password", password);
             if (image) {
                 formData.append("pfp", image);
             }
