@@ -11,11 +11,12 @@ import { TestSession, uploadMulter } from "./utilities/general";
 const app = express();
 const port = 8888;
 
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://localhost",
-    "http://localhost",
-];
+const allowedOrigins = new Set(
+    (process.env.ALLOWED_ORIGINS ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+);
 
 const defaultUser = {
     id: "0",
