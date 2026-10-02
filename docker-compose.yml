@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DATABASE}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - psql_data:/var/lib/postgresql/data
+    networks:
+      - app_internal
+
+  migrate:
+    build:
+      context: .
+      dockerfile: ./migrate/Dockerfile
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DATABASE: ${PG_DATABASE}
+      ADM_USERNAME: ${ADM_USERNAME}
+      ADM_EMAIL: ${ADM_EMAIL}
+      ADM_PASSWORD: ${ADM_PASSWORD}
+    # execute after the dockerfile has been parsed so the env variables are present
+    command: >
+      sh -c "
+        bun run db:generate &&
+        bun run db:migrate &&
+        bun run db:init
+      "
+    networks:
+      - app_internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      PROD: true
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DATABASE: ${PG_DATABASE}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - profile_uploads:/app/backend/uploads
+      - gallery_uploads:/app/backend/gallery
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - app_internal
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  psql_data:
+  profile_uploads:
+  gallery_uploads:
+
+networks:
+    app_internal:

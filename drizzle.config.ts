@@ -2,6 +2,9 @@ import { defineConfig } from "drizzle-kit";
 
 console.log("[*] Starting Drizzle Configuration...")
 console.log(" |___ Interacting with HOST:", process.env.PG_HOST, "DB:", process.env.PG_DATABASE);
+
+console.warn(`[!] PROCESS-ENV:`, process.env);
+
 export default defineConfig({
     schema: "./database/schema.ts",
     out: "./database",
