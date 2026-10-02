@@ -40,7 +40,9 @@ export const room_adjacency = pgTable("room_adjacency", {
     id: serial("id").primaryKey(),
     room_id: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
     adj_id: integer("adj_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(),
-});
+}, (table) => [
+    unique().on(table.room_id, table.adj_id),
+]);
 
 export const sessions = pgTable("sessions", {
     id: serial("id").primaryKey(),
