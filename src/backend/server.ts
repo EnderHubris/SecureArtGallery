@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.use(express.json()); // middleware to handle JSON
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.has(origin)) {
             callback(null, true);
         } else {
             callback(new Error(`Not allowed by CORS (Denied '${origin}')`));
