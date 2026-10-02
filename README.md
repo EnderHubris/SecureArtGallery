@@ -30,6 +30,15 @@ Database:  Postgresql with Drizzle-ORM (ORM natively provides sql query security
 
 All brought together through [bun](https://bun.com/) the lightning fast JavaScript package manager & toolkit.
 
+## Compose Docker :whale:
+```bash
+# drop compose and remove volumes
+docker compose down -v
+
+# build container
+docker compose up -d --build
+```
+
 ## Developer's Note
 If you are working on either the front-end or back-end software, if you need to modify the packages included
 via `bun add [package]` or `bun rm [package]`, make sure your terminal's cwd is within either `src/frontend` or `src/backend`.
@@ -38,6 +47,7 @@ This project has custom scripts to better handle drizzle *(bunx drizzle-kit migr
 ```console
 bun run db:generate -> generates a new .sql if schema has been updated
 bun run db:migrate  -> migrates most recent .sql file into local db
+bun run db:init  -> initializes database (creates rooms and super-admin)
 ```
 
 ## System Architecture
@@ -54,7 +64,7 @@ separate processes.
 ```console
 # run the front-end locally (start from project root)
 cd src/frontend
-bun install .
+bun install
 bun run dev
 ```
 
@@ -71,12 +81,12 @@ docker run -d \
   -p 5432:5432 \
   -v pgdata:/var/lib/postgresql/data \
   postgres:16
-bun install .
+bun install
 bun run db:migrate
-bun run db:reset_admin
+bun run db:init
 
 # second spin-up the backend API server
 cd src/backend
-bun install .
+bun install
 bun server.ts
 ```
