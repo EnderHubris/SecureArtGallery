@@ -45,7 +45,8 @@ function App() {
             const result = await response.json();
             setLoggedIn(result.success);
             setUser(result.user);
-        } catch {
+        } catch (e) {
+            console.error("[-] Get User Info Failed:", e);
             setLoggedIn(false);
             setUser(defaultUser);
         }

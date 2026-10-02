@@ -11,37 +11,41 @@ export default function Login({ afterLogin } : { afterLogin: () => void }) {
     const [msg, SetMsg] = useState<string|undefined|null>("");
     
     async function sendLogin(e: React.SubmitEvent<HTMLFormElement>) {
-        e.preventDefault();
-
-        const endpoint = GetBackendStr("/login");
-        const response = await fetch(endpoint, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                "username": username,
-                "password_hash": await str2sha256(password),
-            }),
-        });
-
-        const result = await response.json();
-
-        SetSuccess(result.success);
-        SetMsg(result.message);
-
-        if (result.success) {
-            console.log("[+] Login Successful")
-            afterLogin();
+        try {
+            e.preventDefault();
+    
+            const endpoint = GetBackendStr("/login");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "username": username,
+                    "password_hash": await str2sha256(password),
+                }),
+            });
+    
+            const result = await response.json();
+    
+            SetSuccess(result.success);
+            SetMsg(result.message);
+    
+            if (result.success) {
+                console.log("[+] Login Successful")
+                afterLogin();
+            }
+    
+            // clear feedback after some time
+            setTimeout(() => {
+                SetMsg(null);
+                if (result.success)
+                    window.location.href = "/";
+            }, result.success ? 1000 : 3000);
+        } catch (e) {
+            console.error("[-] Login Failed:", e);
         }
-
-        // clear feedback after some time
-        setTimeout(() => {
-            SetMsg(null);
-            if (result.success)
-                window.location.href = "/";
-        }, result.success ? 1000 : 3000);
     }
 
     return (

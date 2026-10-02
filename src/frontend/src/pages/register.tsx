@@ -20,46 +20,50 @@ export default function Register() {
     }
     
     async function sendRegister(e: React.SubmitEvent<HTMLFormElement>) {
-        e.preventDefault();
-
-        // needed because image cannot be pushed in a JSON object
-        const formData = new FormData();
-        formData.append("username", username);
-        formData.append("email", email);
-        formData.append("password_hash", await str2sha256(password));
-        if (image) {
-            formData.append("pfp", image);
+        try {
+            e.preventDefault();
+    
+            // needed because image cannot be pushed in a JSON object
+            const formData = new FormData();
+            formData.append("username", username);
+            formData.append("email", email);
+            formData.append("password_hash", await str2sha256(password));
+            if (image) {
+                formData.append("pfp", image);
+            }
+    
+            const endpoint = GetBackendStr("/register");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                body: formData,
+            });
+    
+            const result = await response.json();
+    
+            // clear form information
+            if (result.success) {
+                SetUsername("");
+                SetEmail("");
+                SetPassword("");
+                SetImage(null);
+    
+                // clear file input element value
+                if (pfpRef.current)
+                    pfpRef.current.value = "";
+            }
+    
+            SetSuccess(result.success);
+            SetMsg(result.message);
+    
+            // clear feedback after some time
+            setTimeout(() => {
+                SetMsg(null);
+                if (result.success)
+                    window.location.href = "/login";
+            }, result.success ? 1000 : 3000);
+        } catch (e) {
+            console.error("[-] User Registration Failed:", e);
         }
-
-        const endpoint = GetBackendStr("/register");
-        const response = await fetch(endpoint, {
-            method: "POST",
-            body: formData,
-        });
-
-        const result = await response.json();
-
-        // clear form information
-        if (result.success) {
-            SetUsername("");
-            SetEmail("");
-            SetPassword("");
-            SetImage(null);
-
-            // clear file input element value
-            if (pfpRef.current)
-                pfpRef.current.value = "";
-        }
-
-        SetSuccess(result.success);
-        SetMsg(result.message);
-
-        // clear feedback after some time
-        setTimeout(() => {
-            SetMsg(null);
-            if (result.success)
-                window.location.href = "/login";
-        }, result.success ? 1000 : 3000);
     }
 
     return (
