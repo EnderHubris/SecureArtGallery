@@ -13,15 +13,19 @@ type NavbarParams = {
 
 export default function Navbar({ loggedIn, user }: NavbarParams ) {
     async function handleLogout() {
-        const endpoint = GetBackendStr("/logout");
-        const response = await fetch(endpoint, {
-            method: "POST",
-            credentials: "include"
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            window.location.href = "/";
+        try {
+            const endpoint = GetBackendStr("/logout");
+            const response = await fetch(endpoint, {
+                method: "POST",
+                credentials: "include"
+            });
+    
+            const result = await response.json();
+            if (result.success) {
+                window.location.href = "/";
+            }
+        } catch (e) {
+            console.error("[-] Logout Failed:", e);
         }
     }
 

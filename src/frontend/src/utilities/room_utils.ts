@@ -29,7 +29,8 @@ export async function EnterRoom(room_id: number): Promise<{
             }),
         });
         return await response.json();
-    } catch {
+    } catch (e) {
+        console.error("[-] Enter-Room Failed:", e);
         return { success: false, message: "Could not enter at this time!" }
     }
 }

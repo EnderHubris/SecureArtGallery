@@ -37,7 +37,8 @@ export async function VerifyLogin(): Promise<boolean> {
         });
         const result = await response.json();
         return result.success ?? false;
-    } catch {
+    } catch (e) {
+        console.error("[-] User-Verification Failed:", e);
         return false;
     }
 }
@@ -60,7 +61,8 @@ export async function GetRoomInfo(): Promise<{
         });
         const result = await response.json();
         return result;
-    } catch {
+    } catch (e) {
+        console.error("[-] Fetching Room-Info Failed:", e);
         return {
             room: lobbyRoom,
             adjacent: [],

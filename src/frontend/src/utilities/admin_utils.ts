@@ -24,7 +24,8 @@ export async function DeleteUser(uid: string): Promise<{
             }),
         });
         return await response.json();
-    } catch {
+    } catch (e) {
+        console.error("[-] User Deletion Failed:", e);
         return { success: false, message: "Error Deleting User!" }
     }
 }
@@ -34,7 +35,7 @@ export async function UnbanUser(uid: string): Promise<{
     message: string;
 }> {
     if (uid.length === 0)
-        return { success: false, message: "Error Banning User!" }
+        return { success: false, message: "Error Unbanning User!" }
 
     try {
         const endpoint = GetBackendStr("/admin/unban_user");
@@ -49,8 +50,9 @@ export async function UnbanUser(uid: string): Promise<{
             }),
         });
         return await response.json();
-    } catch {
-        return { success: false, message: "Error Banning User!" }
+    } catch (e) {
+        console.error("[-] User-Unban Failed:", e);
+        return { success: false, message: "Error Unbanning User!" }
     }
 }
 
@@ -74,7 +76,8 @@ export async function BanUser(uid: string): Promise<{
             }),
         });
         return await response.json();
-    } catch {
+    } catch (e) {
+        console.error("[-] User-Ban Failed:", e);
         return { success: false, message: "Error Banning User!" }
     }
 }
@@ -102,7 +105,8 @@ export async function ChangeRole(uid: string, role: string): Promise<{
             }),
         });
         return await response.json();
-    } catch {
+    } catch (e) {
+        console.error("[-] User-Role Update Failed:", e);
         return { success: false, message: "Error Updating User's Role!" }
     }
 }
@@ -137,7 +141,8 @@ export async function CreateNewEmployee({
             }),
         });
         return await response.json();
-    } catch {
-        return { success: false, message: "Error Creating Employee!" }
+    } catch (e) {
+        console.error(`[-] User (${role}) Creation Failed:`, e);
+        return { success: false, message: `Error Creating new ${role.toUpperCase()}!` }
     }
 }
