@@ -13,6 +13,8 @@ const port = 8888;
 
 const allowedOrigins = [
     "http://localhost:5173",
+    "https://localhost",
+    "http://localhost",
 ];
 
 const defaultUser = {
@@ -31,7 +33,7 @@ app.use(cors({
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error("Not allowed by CORS"));
+            callback(new Error(`Not allowed by CORS (Denied '${origin}')`));
         }
     },
     credentials: true,

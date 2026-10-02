@@ -21,9 +21,11 @@ export async function str2sha256(value: string): Promise<string> {
  * @returns 
  */
 export function GetBackendStr(dir: string) {
-    // any env variable titled VITE_* are visible to the client
-    const url = new URL((import.meta.env.VITE_BACK_END_HOST ?? '/api/') + dir)
-    return url.toString();
+    let base = import.meta.env.VITE_BACK_END_HOST ?? "/api/";
+    if (!base.endsWith("/")) base += "/";
+
+    const baseUrl = new URL(base, window.location.origin);
+    return new URL(dir.replace(/^\/+/, ""), baseUrl).toString();
 }
 
 export async function VerifyLogin(): Promise<boolean> {
