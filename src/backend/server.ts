@@ -176,17 +176,20 @@ app.post("/enter_room", async (req, res) => {
         const jwt = req.cookies.token;
         const { id } = req.body;
 
-        if (!jwt || !id)
-            return {
+        if (!jwt || !id) {
+            console.error("[-] (enter_room) Missing data!")
+            return res.json({
                 success: false,
                 message: "Could not enter at this time!"
-            }
+            });
+        }
 
         if (!await TestSession(jwt, res)) {
-            return {
+            console.error("[-] (enter_room) Invalid Session!")
+            return res.json({
                 success: id === 1,
                 message: (id === 1) ? "Welcome to the Lobby!" : "Could not enter at this time!"
-            }
+            });
         }
 
         return res.json(await EnterRoom(jwt, id, req));

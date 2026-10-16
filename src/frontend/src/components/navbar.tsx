@@ -48,7 +48,7 @@ export default function Navbar({ loggedIn, user }: NavbarParams ) {
             )}
 
             <div className="d-flex flex-column flex-grow-1"></div>
-            <span>{user.username}</span>
+            <span id="username-display">{user.username}</span>
 
             {/* role display */}
             {user.role === "guest" && (
