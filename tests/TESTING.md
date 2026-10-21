@@ -22,6 +22,7 @@ pip install -r requirements.txt
 
 ### Functional
 Functional tests are written using [playwright](https://playwright.dev/python/docs/intro) a popular and maintained library used for web-driver based testing.
+This specific suite utilizes the `ADM_USERNAME` and `ADM_PASSWORD` values you define in your `.env`. **Ensure these variables are defined in a file 'functional/.env'**.
 
 To run the test-suite.
 ```console
@@ -30,3 +31,10 @@ pytest
 ```
 
 ### Security
+Security tests primarily focus on how the user can interact with the backend express server. For this we use `requests` library.
+
+To run the test-suite.
+```console
+cd security
+pytest
+```

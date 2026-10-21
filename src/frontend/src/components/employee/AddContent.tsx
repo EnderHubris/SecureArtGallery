@@ -100,7 +100,7 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
                             htmlFor="pfp"
                             className="form-label fw-semibold mb-1"
                         >
-                            Profile Image
+                            Gallary Image
                         </label>
 
                         <input

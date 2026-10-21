@@ -29,5 +29,13 @@ def test_admin_access():
     assert r.status_code != 200, "Unauthorized Admin Access!"
 
 def test_gallery_fetching():
-    print("Need to test /gallery/:file endpoint")
-    return
+    payloads = [
+        "/etc/passwd",
+        ".env",
+    ]
+    for payload in payloads:
+        for i in range(0,10):
+            # try different path traversals
+            t = ("../" * i) + payload
+            r = requests.get(BASE_URL + "/gallery/" + t)
+            assert r.status_code != 200, "LFI Detected!"
