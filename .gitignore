@@ -6,6 +6,7 @@ build/
 
 # production folders
 src/
+tests/
 database/
 bun.*
 package.*
@@ -15,3 +16,6 @@ Dockerfile
 # secrets
 .env
 .env*
+
+# others
+*Zone-Identifier
