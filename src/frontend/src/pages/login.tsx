@@ -52,7 +52,9 @@ export default function Login({ afterLogin } : { afterLogin: () => void }) {
     <>
         <div className="container">
             <div className="row d-flex justify-content-center align-items-center h-100">
-                <Feedback success={success} message={msg} />
+                <div className="col-12">
+                    <Feedback success={success} message={msg} />
+                </div>
 
                 <div className="col-12 col-md-8 col-lg-6 col-xl-5">
                     <div className="card">
