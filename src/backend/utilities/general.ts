@@ -38,13 +38,7 @@ export async function TestSession(jwt: string, res) {
     const token_valid = await CheckSession(jwt);
     
     if (!token_valid) {
-        res.clearCookie("token", {
-            httpOnly: true, // prevent cookie stealing
-            secure: process.env.PROD === "production",
-            sameSite: "lax",
-            path: "/",
-        });
-        
+        res.clearCookie("token");
         return false;
     }
     return true

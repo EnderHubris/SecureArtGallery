@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export const SESSION_LIFETIME = Number(process.env.SESSION_LIFETIME_DAYS ?? 7) * MS_PER_DAY;
 
-import jwt from 'jsonwebtoken';
+import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import type { UserData } from "./m_types";
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) console.error("[-] Missing JWT Secret Value!")
@@ -77,15 +77,17 @@ export function GenerateJWT(uid: string, role: string): string {
  */
 export async function CheckSession(token: string) {
     try {
-        // if invalid this throws an error
-        const payload = jwt.verify(
-            token,
-            JWT_SECRET
-        );
-
-        return !await IsExpired(token);
-    } catch (e: any) {
-        console.error(`[CHECK-SESSION ${new Date().toDateString()}]`, e)
+        jwt.verify(token, JWT_SECRET!);
+        return !(await IsExpired(token));
+    } catch (e) {
+        if (e instanceof TokenExpiredError) {
+            console.warn(`[CHECK-SESSION ${new Date().toISOString()}]`, "Token Found to be Expired, removing entry from DB...");
+            await db.delete(schema.sessions)
+                .where(eq(schema.sessions.token, token));
+            return false;
+        }
+        
+        console.error(`[CHECK-SESSION ${new Date().toISOString()}]`, e);
         return false;
     }
 }
@@ -98,7 +100,7 @@ export async function CheckSession(token: string) {
  * @param role_required guest | employee | admin
  * @returns 
  */
-export function AccessCheck(token: string, role_required: string) {
+export async function AccessCheck(token: string, role_required: string) {
     const roleMap: Record<string, number> = {
         guest: 0,
         employee: 1,
@@ -106,7 +108,8 @@ export function AccessCheck(token: string, role_required: string) {
     }
 
     try {
-        if (!CheckSession(token)) return false;
+        if (!await CheckSession(token))
+            return false;
 
         const payload = jwt.verify(
             token,
