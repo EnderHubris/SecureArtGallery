@@ -34,7 +34,6 @@ services:
     # execute after the dockerfile has been parsed so the env variables are present
     command: >
       sh -c "
-        bun run db:generate &&
         bun run db:migrate &&
         bun run db:init
       "

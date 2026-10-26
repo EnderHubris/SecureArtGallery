@@ -11,9 +11,6 @@ src/backend/gallery
 **/log
 **/*.log
 
-database/meta
-database/0*.sql
-
 .git
 .gitignore
 .vscode
