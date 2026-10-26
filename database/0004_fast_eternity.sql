@@ -1,0 +1,2 @@
+ALTER TABLE "gallery_images" ADD COLUMN "visible" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "room_adjacency" ADD CONSTRAINT "room_adjacency_room_id_adj_id_unique" UNIQUE("room_id","adj_id");
