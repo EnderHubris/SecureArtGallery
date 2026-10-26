@@ -68,7 +68,8 @@ export const access_logs = pgTable("access_logs", {
 export const galleryImages = pgTable("gallery_images", {
     id: serial("id").primaryKey(),
     image: varchar("image", { length: 42 }).notNull(),   // user-uploaded file names are MD5 hash strings
-    room_id: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull() // room the image belongs to
+    room_id: integer("room_id").references(() => rooms.id, { onDelete: "cascade" }).notNull(), // room the image belongs to
+    visible: boolean("visible").notNull().default(true),
 }, (table) => [
     unique().on(table.image, table.room_id),
 ]);

@@ -1,6 +1,6 @@
 import { db } from "../db";
 import {
-    eq, or, sql
+    eq, or, sql, asc
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
 
@@ -180,7 +180,8 @@ export async function GetAllGalleryImages(page: number): Promise<{
     content: {
         id: string,
         image: string,
-        room_id: number
+        room_id: number,
+        visible: boolean
     }[]
 }> {
     // keep page positive
@@ -189,6 +190,10 @@ export async function GetAllGalleryImages(page: number): Promise<{
     try {
         const content = await db.select()
             .from(schema.galleryImages)
+            .orderBy(
+                asc(schema.galleryImages.room_id),
+                asc(schema.galleryImages.id) // tiebreaker so pagination is stable
+            )
             .limit(16).offset(16 * (page-1));
 
         return { success: true, content: content }
