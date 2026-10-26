@@ -47,7 +47,7 @@ app.set("trust proxy", true); // help forward client IP when behind NGINX/Cloudf
 // separate files to reduce clustering multiple
 // endpoints into a single file
 import userRoutes from "./routers/user_router";
-import { CheckSession, GetSession, SESSION_LIFETIME } from "./utilities/session_utils";
+import { GetSession, SESSION_LIFETIME } from "./utilities/session_utils";
 app.use("/user", userRoutes);
 
 import adminRoutes from "./routers/admin_router";

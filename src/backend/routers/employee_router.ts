@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { AccessCheck } from "../utilities/session_utils";
 import { GetAllGalleryImages, GetAllUsers, KickUser, uploadMulter } from "../utilities/general";
 import { GetAllRooms } from "../utilities/room_rules";
-import { UploadGalleryImage } from "../utilities/gallery_rules";
+import { UploadToGallary } from "../utilities/gallery_rules";
 import { GetActionLogs } from "../utilities/log_rules";
 const router = Router();
 
@@ -58,27 +58,8 @@ router.post("/get_content", async (req, res) => {
     }
 });
 
-router.post("/upload_content", uploadMulter.single("g_img"), async (req, res) => {
-    try {
-        const { room } = req.body;
-        const image = req.file;
-        const jwt = req.cookies.token;
-
-        if (!image || !jwt || !room) {
-            console.warn("[!] Missing Required Data for Uploading Gallery Image");
-            return {
-                success: false,
-                message: "Failed to Upload to Gallery!"
-            }
-        }
-
-        return res.json(
-            await UploadGalleryImage(image, jwt, room)
-        );
-    } catch (e) {
-        console.error(`[UPLOAD-CONTENT ${new Date().toDateString()}]`, e);
-        res.status(500).send("Server Error");
-    }
+router.post("/upload_content", uploadMulter.array("g_img", 10), async (req, res) => {
+    return UploadToGallary(req, res);
 });
 
 router.post("/kick_user", async (req, res) => {
