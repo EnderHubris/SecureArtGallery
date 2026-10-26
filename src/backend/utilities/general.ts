@@ -1,6 +1,6 @@
 import { db } from "../db";
 import {
-    eq, or, sql
+    eq, or, sql, asc
 } from "drizzle-orm";
 import * as schema from "../../../database/schema";
 
@@ -30,6 +30,7 @@ export const uploadMulter = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 10 * 1024 * 1024, // 10 MB
+        files: 10, // max files uploaded at a time
     },
 });
 
@@ -37,13 +38,7 @@ export async function TestSession(jwt: string, res) {
     const token_valid = await CheckSession(jwt);
     
     if (!token_valid) {
-        res.clearCookie("token", {
-            httpOnly: true, // prevent cookie stealing
-            secure: process.env.PROD === "production",
-            sameSite: "lax",
-            path: "/",
-        });
-        
+        res.clearCookie("token");
         return false;
     }
     return true
@@ -86,22 +81,41 @@ async function writeFile(file: Express.Multer.File, name: string, UPLOAD_DIR: st
 }
 
 export async function UploadImage(image: Express.Multer.File|undefined|null, UPLOAD_DIR: string) {
-    if (!image) return "guest.png"
+    if (!image) {
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
 
     // convert name into md5 and preserve ext (png, jpg)
     const ext = getExtension(image.originalname);
     const n_file_name = str2md5(image.originalname) + "." + ext;
 
-    if (!validTypes.includes(image.mimetype)) // check mime type
-        return "guest.png"
-    if (!validExtensions.includes(getExtension(n_file_name))) // check file ext
-        return "guest.png"
-
+    if (!validTypes.includes(image.mimetype)) { // check mime type
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
+    if (!validExtensions.includes(getExtension(n_file_name))) { // check file ext
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
     // upload file to uploads directory
-    if (!await writeFile(image, n_file_name, UPLOAD_DIR))
-        return "guest.png"
-        
-    return n_file_name;
+    if (!await writeFile(image, n_file_name, UPLOAD_DIR)) {
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
+
+    return {
+        "success": true,
+        "filename": n_file_name
+    };
 }
 
 /**
@@ -160,7 +174,8 @@ export async function GetAllGalleryImages(page: number): Promise<{
     content: {
         id: string,
         image: string,
-        room_id: number
+        room_id: number,
+        visible: boolean
     }[]
 }> {
     // keep page positive
@@ -169,6 +184,10 @@ export async function GetAllGalleryImages(page: number): Promise<{
     try {
         const content = await db.select()
             .from(schema.galleryImages)
+            .orderBy(
+                asc(schema.galleryImages.room_id),
+                asc(schema.galleryImages.id) // tiebreaker so pagination is stable
+            )
             .limit(16).offset(16 * (page-1));
 
         return { success: true, content: content }

@@ -12,25 +12,38 @@ type Props = {
 export default function AddGalleryContent({ user, rooms, feedback, LoadContent }: Props) {
     const galleryImgRef = useRef<HTMLInputElement>(null);
 
-    const [n_image, SetImage] = useState<File|null|undefined>(null);
+    const [images, SetImages] = useState<File[]>([]);
     const [room_id, SetRoomID] = useState<string>("1");
 
-    function updateImageFile(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
-        const file = e.target.files?.[0] ?? null;
-        SetImage(file);
+    // keep the state and the file-list in sync
+    function syncFiles(files: File[]) {
+        SetImages(files);
+        if (galleryImgRef.current) {
+            const dt = new DataTransfer();
+            files.forEach((f) => dt.items.add(f));
+            galleryImgRef.current.files = dt.files;
+        }
+    }
+
+    function updateImageFiles(e: React.ChangeEvent<HTMLInputElement>) {
+        syncFiles(Array.from(e.target.files ?? []));
+    }
+
+    function removeImage(index: number) {
+        syncFiles(images.filter((_, i) => i !== index));
     }
 
     async function handleCreation(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
         
-        if (!n_image) {
-            alert("Missing required image!");
+        if (images.length === 0) {
+            alert("Select at least one image!");
             return;
         }
 
         const formData = new FormData();
         formData.append("room", room_id);
-        formData.append("g_img", n_image);
+        images.forEach((img) => formData.append("g_img", img));
 
         const endpoint = GetBackendStr(`/${user.role}/upload_content`);
         const response = await fetch(endpoint, {
@@ -40,18 +53,9 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
         });
 
         const result = await response.json();
-        if (result.success) {
-            // clear file input element value
-            SetImage(null);
+        if (result.success) syncFiles([]);
 
-            if (galleryImgRef.current)
-                galleryImgRef.current.value = "";
-        }
-        
-        feedback(
-            result.success,
-            result.message
-        );
+        feedback(result.success, result.message);
         if (result.success)
             setTimeout(() => LoadContent(), 3200);
     }
@@ -66,7 +70,7 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
                 >
                     <div className="text-center mb-4">
                         <h3 className="fw-bold text-uppercase mb-2">
-                            Add Image to Gallery
+                            Add Images to Gallery
                         </h3>
                     </div>
 
@@ -96,37 +100,48 @@ export default function AddGalleryContent({ user, rooms, feedback, LoadContent }
                     </div>
 
                     <div className="mb-4 text-start">
-                        <label
-                            htmlFor="pfp"
-                            className="form-label fw-semibold mb-1"
-                        >
-                            Profile Image
+                        <label htmlFor="g_img" className="form-label fw-semibold mb-1">
+                            Gallery Images
                         </label>
 
                         <input
-                            id="pfp"
+                            id="g_img"
                             type="file"
+                            multiple
                             className="form-control"
                             accept="image/png,image/jpeg"
-                            onChange={(e) => updateImageFile(e)}
+                            onChange={updateImageFiles}
                             ref={galleryImgRef}
                         />
 
-                        <div className="form-text">
-                            {n_image && (
-                                <p>
-                                    Selected: {n_image.name}
-                                </p>
-                            )}
-                        </div>
+                        {images.length > 0 && (
+                            <ul className="list-group mt-3">
+                                {images.map((img, i) => (
+                                    <li
+                                        key={`${img.name}-${img.lastModified}`}
+                                        className="list-group-item d-flex justify-content-between align-items-center"
+                                    >
+                                        <span className="text-truncate me-3">{img.name}</span>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger"
+                                            onClick={() => removeImage(i)}
+                                        >
+                                            Remove
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
 
                     <div className="d-grid mt-4">
                         <button
                             className="btn btn-primary btn-lg"
                             type="submit"
+                            disabled={images.length === 0}
                         >
-                            Add Content
+                            Add {images.length > 1 ? `${images.length} Images` : "Content"}
                         </button>
                     </div>
                 </form>

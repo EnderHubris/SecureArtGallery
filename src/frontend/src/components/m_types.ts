@@ -17,5 +17,6 @@ export type RoomData = {
 export type GalleryImage = {
     id: string,
     image: string,
-    room_id: number
+    room_id: number,
+    visible: boolean
 }

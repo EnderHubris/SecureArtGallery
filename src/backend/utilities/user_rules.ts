@@ -192,14 +192,14 @@ export async function Register(
         }
 
         // if an image was provided upload and handle it
-        const img_str = await UploadImage(image, UPLOAD_DIR);
+        const { success, filename } = await UploadImage(image, UPLOAD_DIR);
 
         // create a new user entry
         await db.insert(schema.users).values({
             username: username,
             email: email,
             password_hash: str2sha256(password),
-            image: img_str
+            image: filename
         })
 
         return { "success": true, "message": "Registered Successfully!" }
@@ -255,9 +255,13 @@ export async function UpdateProfile(
         if (n_password && n_password.length > 0)
             n_values.password_hash = str2sha256(n_password);
 
+        let pfp_changed = false;
         if (image) {
-            const img_str = await UploadImage(image, UPLOAD_DIR);
-            n_values.image = img_str;
+            const { success, filename } = await UploadImage(image, UPLOAD_DIR);
+            if (success) {
+                n_values.image = filename;
+                pfp_changed = true;
+            }
         }
 
         // clear old session(s) and generate a new one
@@ -281,7 +285,9 @@ export async function UpdateProfile(
             .set(n_values)
             .where(eq(schema.users.id, user.id));
 
-        return { "success": true, "message": "Updated Successfully!" }
+        const msg = "Updated Successfully" + (image && !pfp_changed) ? ", profile picture could not be updated." : "!"
+
+        return { "success": true, "message": msg }
     } catch (e: any) {
         console.error(`[UPDATE-PROFILE ${new Date().toDateString()}]`, e);
         return { "success": false, "message": "Update Failed!" }

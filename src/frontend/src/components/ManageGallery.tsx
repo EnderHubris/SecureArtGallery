@@ -3,6 +3,7 @@ import { GetBackendStr } from "../utilities/utiliies";
 import { useSearchParams } from "react-router-dom";
 
 import AddGalleryContent from "../components/employee/AddContent"
+import GallaryImageCard from "./GallaryImageCard"
 
 import type { RoomData, UserData, GalleryImage } from "./m_types";
 
@@ -146,37 +147,14 @@ export default function GalleryManage({ user, feedback }: Props) {
 
             <div className="row g-4">
                 {images.map((image: GalleryImage) => (
-                    <div
-                        className="col-12 col-sm-6 col-lg-4 col-xl-3"
+                    <GallaryImageCard
                         key={image.id}
-                    >
-                        <div
-                            className="p-2 shadow"
-                            style={{
-                                backgroundColor: "#5a3a22",
-                                border: "8px solid #8b5e34",
-                                borderRadius: "4px",
-                            }}
-                        >
-                            <div
-                                className="p-2"
-                                style={{
-                                    backgroundColor: "#1f1f1f",
-                                }}
-                            >
-                                <img
-                                    src={GetBackendStr(`/gallery/${image.image}`)}
-                                    alt=""
-                                    className="w-100 d-block"
-                                    style={{
-                                        height: "220px",
-                                        objectFit: "cover",
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        <figcaption>Located at Room ID: <b>{image.room_id}</b></figcaption>
-                    </div>
+                        image={image}
+                        user={user}
+                        rooms={rooms}
+                        feedback={feedback}
+                        LoadContent={LoadContent}
+                    />
                 ))}
             </div>
 
