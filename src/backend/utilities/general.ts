@@ -30,6 +30,7 @@ export const uploadMulter = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 10 * 1024 * 1024, // 10 MB
+        files: 10, // max files uploaded at a time
     },
 });
 
@@ -86,22 +87,41 @@ async function writeFile(file: Express.Multer.File, name: string, UPLOAD_DIR: st
 }
 
 export async function UploadImage(image: Express.Multer.File|undefined|null, UPLOAD_DIR: string) {
-    if (!image) return "guest.png"
+    if (!image) {
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
 
     // convert name into md5 and preserve ext (png, jpg)
     const ext = getExtension(image.originalname);
     const n_file_name = str2md5(image.originalname) + "." + ext;
 
-    if (!validTypes.includes(image.mimetype)) // check mime type
-        return "guest.png"
-    if (!validExtensions.includes(getExtension(n_file_name))) // check file ext
-        return "guest.png"
-
+    if (!validTypes.includes(image.mimetype)) { // check mime type
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
+    if (!validExtensions.includes(getExtension(n_file_name))) { // check file ext
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
     // upload file to uploads directory
-    if (!await writeFile(image, n_file_name, UPLOAD_DIR))
-        return "guest.png"
-        
-    return n_file_name;
+    if (!await writeFile(image, n_file_name, UPLOAD_DIR)) {
+        return {
+            "success": false,
+            "filename": ""
+        }
+    }
+
+    return {
+        "success": true,
+        "filename": n_file_name
+    };
 }
 
 /**
