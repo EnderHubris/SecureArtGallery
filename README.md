@@ -50,9 +50,6 @@ bun run db:migrate  -> migrates most recent .sql file into local db
 bun run db:init  -> initializes database (creates rooms and super-admin)
 ```
 
-## System Architecture
-
-
 ## Build
 Make sure you've installed [bun](https://bun.com/) and [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) on your system so you can install project dependencies
 and run the project locally as a developer.
